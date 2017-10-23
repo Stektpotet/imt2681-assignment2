@@ -4,7 +4,7 @@ MAINTAINER Halvor Smedås <stektpotet@gmail.com>
 
 WORKDIR "/opt"
 
-ADD .docker_build/imt2681-assignment1 /opt/bin/imt2681-assignment2
+ADD .docker_build/imt2681-assignment2 /opt/bin/imt2681-assignment2
 ADD ./templates /opt/templates
 ADD ./static /opt/static
 
