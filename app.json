@@ -1,5 +1,5 @@
 {
-  "name": "GithubStats",
+  "name": "Webhooker",
   "description": "A service for obtaining stats from repositories on github",
   "keywords": [
     "github",
