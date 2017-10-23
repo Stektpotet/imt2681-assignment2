@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 )
 
 const baseURL = "http://api.fixer.io/latest?base=EUR"
@@ -13,5 +15,10 @@ func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
 	http.HandleFunc("/", ServiceHandler)
+	http.ListenAndServe(":"+port, nil)
 }

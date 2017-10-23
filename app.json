@@ -1,11 +1,11 @@
 {
-  "name": "Webhooker",
-  "description": "A service for obtaining stats from repositories on github",
+  "name": "Currency TrackR",
+  "description": "A service for tracking changes in currencies via webhooks",
   "keywords": [
     "github",
     "go"
   ],
-  "image": "heroku/go:1.6",
+  "image": "heroku/go:1.8.3",
   "mount_dir": "src/github.com/stektpotet/imt2681-assignment2",
   "website": "http://github.com/stektpotet/imt2681-assignment2",
   "repository": "github.com/stektpotet/imt2681-assignment2"
