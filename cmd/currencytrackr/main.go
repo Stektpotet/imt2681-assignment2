@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
 	"time"
 
@@ -10,16 +9,10 @@ import (
 	"github.com/stektpotet/imt2681-assignment2/fixer"
 )
 
-const rootURL = "/api/"
-const webhookBaseURL = "/hooks/"
-const mongodbURL = "mongodb://localhost"
-const fixerURL = "latest?base=EUR"
-
-//ServiceHandler - TODO
-func ServiceHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "application/json")
-
-}
+const (
+	mongodbURL = "mongodb://localhost"
+	fixerPath  = "latest?base=EUR"
+)
 
 // func ServiceHandler2(w http.ResponseWriter, r *http.Request) {
 // 	payload := MessagePayload{}
@@ -32,37 +25,45 @@ func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 // 	json.NewEncoder(w).Encode(payload)
 // }
 
-// UpdateCurrencies - Updates the currency database
-func UpdateCurrencies(db database.DBStorage) {
-	//TODO
-	db.Add(fixer.GetCurrencies(fixerURL))
-	// log.Printf("%+v", payload)
+// Tick - Updates the currency database
+func Tick(db database.DBStorage) {
+	payload := fixer.GetCurrencies(fixerPath)
+	db.Add(payload)
+	// db.Add(fixer.GetCurrencies(fixerURL))
+
 }
 
-var GlobalDB database.DBStorage
+var globalDB database.DBStorage
+
+func GetPort() (port string) {
+	port = os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("$PORT must be set")
+		// port = "5000"
+	}
+	return
+}
 
 func main() {
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("$PORT must be set.")
+	// globalDB = &database.CurrencyDB{}
+
+	globalDB = &database.CurrencyMongoDB{
+		MongoDB: &database.MongoDB{
+			HostURL:        mongodbURL,
+			Name:           "currencytrackr",
+			CollectionName: "currency",
+		},
 	}
-	GlobalDB = &database.CurrencyDB{}
-	// GlobalDB = &database.CurrencyDB{
-	// 	"mongodb://localhost:" + port,
-	// 	"currencyTrackr",
-	// 	"currency",
-	// }
 
-	GlobalDB.Init()
+	globalDB.Init()
 
-	UpdateCurrencies(GlobalDB)
-	// GetFixerCurrencies()
+	Tick(globalDB)
 	ticker := time.NewTicker(time.Hour * 24)
 
 	for _ = range ticker.C {
-		UpdateCurrencies(GlobalDB)
-		// GetFixerCurrencies()
+		log.Printf("%+v: Tick!", time.Now())
+		Tick(globalDB)
 	}
 }
 
