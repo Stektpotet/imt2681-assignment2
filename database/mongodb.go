@@ -8,7 +8,7 @@ import (
 type DBStorage interface {
 	Init()
 	Add(fixer.Currency) error
-	Count() uint
+	Count() int
 	Get(key string) (fixer.Currency, bool)
 	GetAll() []fixer.Currency
 }
@@ -27,15 +27,4 @@ func (db *MongoDB) CreateSession() *mgo.Session {
 		panic(err)
 	}
 	return s
-}
-
-// Init - Initialize the database. i.e. put constraints on it etc. setup stuff
-func (db *MongoDB) Init() {
-	session := db.CreateSession()
-	defer session.Close()
-	// TODO setup index
-	// mgo.Index{
-	//
-	// }
-	//
 }

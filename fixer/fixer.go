@@ -14,19 +14,17 @@ type Currency struct {
 	Rates map[string]float32 `json:"rates"`
 }
 
-func GetCurrencies(fixerURL string) Currency {
-	response, err := http.Get(fixerBaseURL + fixerURL)
+func GetCurrencies(fixerPath string) (payload Currency) {
+	response, err := http.Get(fixerBaseURL + fixerPath)
 	if err != nil {
 		log.Fatalf("Failed obtaining currencies from Fixer: %+v", err.Error())
 	}
 	defer response.Body.Close()
 
-	var p Currency
-	err = json.NewDecoder(response.Body).Decode(&p)
+	err = json.NewDecoder(response.Body).Decode(&payload)
 
 	if err != nil {
 		log.Fatalf("Failed decoding Fixer-payload:%+v\n\n", err)
 	}
-
-	return p
+	return
 }

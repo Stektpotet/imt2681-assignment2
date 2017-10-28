@@ -45,7 +45,7 @@ func GetPort() (port string) {
 }
 
 func main() {
-
+	log.Println("Running CurrencyTrackR")
 	// globalDB = &database.CurrencyDB{}
 
 	globalDB = &database.CurrencyMongoDB{
@@ -59,7 +59,7 @@ func main() {
 	globalDB.Init()
 
 	Tick(globalDB)
-	ticker := time.NewTicker(time.Hour * 24)
+	ticker := time.NewTicker(time.Second * 4)
 
 	for _ = range ticker.C {
 		log.Printf("%+v: Tick!", time.Now())
