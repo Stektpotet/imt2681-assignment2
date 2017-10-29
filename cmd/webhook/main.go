@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 
 	"github.com/stektpotet/imt2681-assignment2/database"
+	"github.com/stektpotet/imt2681-assignment2/util"
 )
 
 //WebhookPayload - The payload of webhooks in the system
@@ -56,25 +55,30 @@ func evaluationTriggerHandler(w http.ResponseWriter, r *http.Request) {
 	//obtain database's webhook collection
 }
 
-func GetPort() (port string) {
-	port = os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("$PORT must be set")
-	}
-	return
-}
-
 var globalDB database.DBStorage
 
 func main() {
-	port := GetPort()
 
-	globalDB = &database.CurrencyDB{}
+	var mongoDBHosts = []string{
+		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
+		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
+		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
+	}
+
+	globalDB = &database.CurrencyMongoDB{
+		MongoDB: &database.MongoDB{
+			HostURLs:       mongoDBHosts,
+			AdminUser:      util.GetEnv("WEBHOOK_USER"),
+			AdminPass:      util.GetEnv("WEBHOOK_PASS"),
+			Name:           "currencytrackr",
+			CollectionName: "currency",
+		},
+	}
 	globalDB.Init()
 
 	http.HandleFunc(rootPath, serviceHandler)
 	http.HandleFunc(latestPath, latestHandler)
 	http.HandleFunc(averagePath, averageHandler)
 	http.HandleFunc(triggerPath, evaluationTriggerHandler)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":"+util.GetEnv("PORT"), nil)
 }

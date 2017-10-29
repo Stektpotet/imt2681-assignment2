@@ -2,16 +2,15 @@ package main
 
 import (
 	"log"
-	"os"
 	"time"
 
 	"github.com/stektpotet/imt2681-assignment2/database"
 	"github.com/stektpotet/imt2681-assignment2/fixer"
+	"github.com/stektpotet/imt2681-assignment2/util"
 )
 
 const (
-	mongodbURL = "mongodb://localhost"
-	fixerPath  = "latest?base=EUR"
+	fixerPath = "latest?base=EUR"
 )
 
 // func ServiceHandler2(w http.ResponseWriter, r *http.Request) {
@@ -35,22 +34,22 @@ func Tick(db database.DBStorage) {
 
 var globalDB database.DBStorage
 
-func GetPort() (port string) {
-	port = os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("$PORT must be set")
-		// port = "5000"
-	}
-	return
-}
-
 func main() {
+
+	var mongoDBHosts = []string{
+		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
+		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
+		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
+	}
+
 	log.Println("Running CurrencyTrackR")
 	// globalDB = &database.CurrencyDB{}
 
 	globalDB = &database.CurrencyMongoDB{
 		MongoDB: &database.MongoDB{
-			HostURL:        mongodbURL,
+			HostURLs:       mongoDBHosts,
+			AdminUser:      util.GetEnv("TRACKER_USER"),
+			AdminPass:      util.GetEnv("TRACKER_PASS"),
 			Name:           "currencytrackr",
 			CollectionName: "currency",
 		},
