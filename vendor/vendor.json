@@ -3,9 +3,10 @@
 	"heroku": {
 		"goVersion": "go1.8.3",
 		"install": [
-			"./..."
+			"./cmd/..."
 		]
 	},
 	"ignore": "test",
-	"rootPath": "github.com/stektpotet/imt2681-assignment1"
+	"package": [],
+	"rootPath": "github.com/stektpotet/imt2681-assignment2"
 }
