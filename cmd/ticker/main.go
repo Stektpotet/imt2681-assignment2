@@ -17,8 +17,8 @@ func initializeDBConnection(mongoDBHosts []string) {
 	globalDB = &database.CurrencyMongoDB{
 		MongoDB: &database.MongoDB{
 			HostURLs:  mongoDBHosts,
-			AdminUser: util.GetEnv("WEBHOOK_USER"),
-			AdminPass: util.GetEnv("WEBHOOK_PASS"),
+			AdminUser: util.GetEnv("TRACKER_USER"),
+			AdminPass: util.GetEnv("TRACKER_PASS"),
 			Name:      "currencytrackr",
 		},
 	}
@@ -67,5 +67,4 @@ func main() {
 		log.Printf("%+v: Tick!", time.Now())
 		Tick()
 	}
-	// http.ListenAndServe(":"+util.GetEnv("PORT"), nil)
 }

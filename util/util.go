@@ -19,6 +19,15 @@ func DateString(y int, m time.Month, d int) string {
 	return fmt.Sprintf("%d-%02d-%02d", y, m, d)
 }
 
+func Contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 // UntilTomorrow ...
 func UntilTomorrow() time.Duration {
 	// @doc https://stackoverflow.com/a/36988882

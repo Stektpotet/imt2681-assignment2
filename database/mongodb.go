@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/stektpotet/imt2681-assignment2/util"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -34,38 +35,28 @@ func (db *MongoDB) CreateLocalSession() *mgo.Session {
 	}
 	return session
 }
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
 
 // CreateSession - create DB Collection session
 func (db *MongoDB) CreateSession() *mgo.Session {
-	var s *mgo.Session
-	var err error
 
-	if !contains(db.HostURLs, "localhost") {
-		dialInfo := &mgo.DialInfo{
-			Addrs:    db.HostURLs,
-			Username: db.AdminUser,
-			Password: db.AdminPass,
-
-			DialServer: func(addr *mgo.ServerAddr) (net.Conn, error) {
-				return tls.Dial("tcp", addr.String(), &tls.Config{})
-			},
-			Timeout: time.Second * 10,
-		}
-		s, err = mgo.DialWithInfo(dialInfo)
-	} else {
-		s, err = mgo.Dial("mongodb://localhost")
+	if util.Contains(db.HostURLs, "localhost") {
+		return db.CreateLocalSession() //No need for dialing with info
 	}
+	//ELSE
+	dialInfo := &mgo.DialInfo{
+		Addrs:    db.HostURLs,
+		Username: db.AdminUser,
+		Password: db.AdminPass,
 
+		DialServer: func(addr *mgo.ServerAddr) (net.Conn, error) {
+			return tls.Dial("tcp", addr.String(), &tls.Config{})
+		},
+		Timeout: time.Second * 10,
+	}
+	s, err := mgo.DialWithInfo(dialInfo)
 	if err != nil {
 		panic(err)
 	}
 	return s
+
 }

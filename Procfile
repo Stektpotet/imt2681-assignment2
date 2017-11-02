@@ -1,2 +1,2 @@
-clock: webhook
+clock: ticker
 web: currencytrackr
