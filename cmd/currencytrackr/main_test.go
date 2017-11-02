@@ -29,5 +29,5 @@ func TestUpdateCurrencies(t *testing.T) {
 }
 
 func TestUpdateCurrenciesMongo(t *testing.T) {
-	// var TestDB database.DBStorage
+
 }

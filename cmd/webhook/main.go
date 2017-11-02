@@ -1,84 +1,72 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"log"
+	"time"
 
 	"github.com/stektpotet/imt2681-assignment2/database"
+	"github.com/stektpotet/imt2681-assignment2/fixer"
 	"github.com/stektpotet/imt2681-assignment2/util"
+	"github.com/stektpotet/imt2681-assignment2/webhook"
 )
-
-//WebhookPayload - The payload of webhooks in the system
-type WebhookPayload struct {
-	URL             string  `json:"webhookURL"`
-	Base            string  `json:"baseCurrency"`
-	Target          string  `json:"targetCurrency"`
-	MinTriggerValue float32 `json:"minTriggerValue"`
-	MaxTriggerValue float32 `json:"maxTriggerValue"`
-}
-
-const (
-	rootPath    = "/api/"
-	latestPath  = rootPath + "latest/"
-	averagePath = rootPath + "average/"
-	triggerPath = rootPath + "evaluationtrigger"
-	mongodbURL  = "mongodb://localhost"
-)
-
-func sanetizeHook(hookURL string) string {
-	return fmt.Sprintf("Sanetization not implemented. Hook:\n%+v", hookURL)
-}
-
-func serviceHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "application/json")
-	switch r.Method {
-	case http.MethodPost:
-
-	case http.MethodGet:
-
-	case http.MethodDelete:
-
-	}
-}
-
-func latestHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "application/json")
-
-}
-
-func averageHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "application/json")
-}
-
-func evaluationTriggerHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "application/json")
-	//obtain database's webhook collection
-}
 
 var globalDB database.DBStorage
 
-func main() {
+func initializeDBConnection(mongoDBHosts []string) {
 
-	var mongoDBHosts = []string{
+	globalDB = &database.CurrencyMongoDB{
+		MongoDB: &database.MongoDB{
+			HostURLs:  mongoDBHosts,
+			AdminUser: util.GetEnv("WEBHOOK_USER"),
+			AdminPass: util.GetEnv("WEBHOOK_PASS"),
+			Name:      "currencytrackr",
+		},
+	}
+	globalDB.Init()
+}
+
+func Tick() {
+	newEntry, err := fixer.GetLatest(fixerPath)
+	if err != nil {
+		log.Println(err)
+	}
+	err = globalDB.Add("currency", newEntry)
+	if err == nil {
+		InvokeHooks(newEntry)
+	}
+}
+
+func InvokeHooks(current fixer.Currency) {
+	hooks := []webhook.SubsciptionOut{}
+	current.Rates[current.Base] = 1
+	globalDB.GetAll("webhook", &hooks)
+	for _, hook := range hooks {
+		hookRate := current.Rates[hook.Target] / current.Rates[hook.Base]
+		if hook.Min <= hookRate && hook.Max >= hookRate {
+			hook.Invoke(hookRate)
+		}
+	}
+}
+
+const (
+	fixerPath      = "base=EUR"
+	tickerInterval = time.Second /*Minute*/ * 24
+)
+
+func main() {
+	hosts := []string{
+		"localhost",
 		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
 	}
 
-	globalDB = &database.CurrencyMongoDB{
-		MongoDB: &database.MongoDB{
-			HostURLs:       mongoDBHosts,
-			AdminUser:      util.GetEnv("WEBHOOK_USER"),
-			AdminPass:      util.GetEnv("WEBHOOK_PASS"),
-			Name:           "currencytrackr",
-			CollectionName: "currency",
-		},
+	initializeDBConnection(hosts)
+	Tick()
+	ticker := time.NewTicker(tickerInterval) //util.UntilTomorrow())
+	for _ = range ticker.C {
+		log.Printf("%+v: Tick!", time.Now())
+		Tick()
 	}
-	globalDB.Init()
-
-	http.HandleFunc(rootPath, serviceHandler)
-	http.HandleFunc(latestPath, latestHandler)
-	http.HandleFunc(averagePath, averageHandler)
-	http.HandleFunc(triggerPath, evaluationTriggerHandler)
-	http.ListenAndServe(":"+util.GetEnv("PORT"), nil)
+	// http.ListenAndServe(":"+util.GetEnv("PORT"), nil)
 }
