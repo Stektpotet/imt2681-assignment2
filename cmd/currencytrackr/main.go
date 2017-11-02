@@ -16,29 +16,23 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-const (
-	baseCurrency   = "EUR"
-	fixerPath      = "base=" + baseCurrency
-	tickerInterval = time.Second /*Minute*/ * 24
+const ( //DATABASE COLLECTIONS
+	dbCurrencyCollection = "currency"
+	dbWebhookCollection  = "webhook"
 )
 
-const (
+const ( //PATHS
 	rootPath    = "/api/"
 	latestPath  = rootPath + "latest/"
 	averagePath = rootPath + "average/"
 	triggerPath = rootPath + "evaluationtrigger/"
 )
 
-// func ServiceHandler2(w http.ResponseWriter, r *http.Request) {
-// 	payload := MessagePayload{}
-// 	payload.Base = "base"
-// 	payload.MaxTriggerValue = 10
-// 	payload.MinTriggerValue = 1
-// 	payload.Target = "target"
-// 	payload.URL = "/test/"
-//
-// 	json.NewEncoder(w).Encode(payload)
-// }
+const ( // OTHER CONSTSTANTS
+	baseCurrency   = "EUR"
+	fixerPath      = "base=" + baseCurrency
+	tickerInterval = time.Second /*Minute*/ * 24
+)
 
 var globalDB database.DBStorage
 
@@ -58,12 +52,13 @@ func initializeDBConnection() {
 		},
 	}
 	globalDB.Init()
+	addEntriesForNPastDays(31)
 }
 
 func addEntriesForNPastDays(n int) {
 	t := time.Now()
 	for i := 0; i < 10; i++ {
-		globalDB.Add("currency", fixer.GetCurrencies(util.DateString(t.Date())))
+		globalDB.Add(dbCurrencyCollection, fixer.GetCurrencies(util.DateString(t.Date())))
 		t = t.AddDate(0, 0, -1)
 	}
 }
@@ -172,7 +167,7 @@ func subscriptionRegister(r *http.Request) (subID string, success bool) {
 
 	hook.HookID = bson.NewObjectId().Hex()
 	log.Printf("%s", hook.HookID)
-	err = globalDB.Add("webhook", hook)
+	err = globalDB.Add(dbWebhookCollection, hook)
 
 	subID = hook.HookID
 	if err != nil {
@@ -189,7 +184,7 @@ func subscriptionGet(URLpath string) (sub webhook.SubsciptionOut, success bool) 
 		success = false
 		return
 	}
-	success = globalDB.Get("webhook", bson.M{"hookid": parts[2]}, &sub)
+	success = globalDB.Get(dbWebhookCollection, bson.M{"hookid": parts[2]}, &sub)
 	return
 }
 
@@ -199,7 +194,7 @@ func subscriptionDelete(URLpath string) (success bool) {
 		success = false
 		return
 	} //root/api/:id
-	success = globalDB.Delete("webhook", bson.M{"hookid": parts[2]})
+	success = globalDB.Delete(dbWebhookCollection, bson.M{"hookid": parts[2]})
 	return
 }
 
@@ -233,11 +228,11 @@ func LatestHandler(w http.ResponseWriter, r *http.Request) {
 func findLastEntry(entry *fixer.Currency) bool {
 	//FIND LATEST ENTRY
 	n := time.Now()
-	entriesRemaining := globalDB.Count("currency")
+	entriesRemaining := globalDB.Count(dbCurrencyCollection)
 	found := false
 	for !found && entriesRemaining >= 0 {
 		latestDate := util.DateString(n.Date())
-		found = globalDB.Get("currency", bson.M{"date": latestDate}, entry)
+		found = globalDB.Get(dbCurrencyCollection, bson.M{"date": latestDate}, entry)
 		entriesRemaining--
 		n = n.AddDate(0, 0, -1)
 	}
@@ -248,7 +243,7 @@ func findNLatestEntries(n int) (entries []fixer.Currency, ok bool) {
 	ok = false
 	t := time.Now()
 	entries = []fixer.Currency{}
-	remaining := globalDB.Count("currency")
+	remaining := globalDB.Count(dbCurrencyCollection)
 	if remaining < n {
 		return //too few entries
 	}
@@ -256,7 +251,7 @@ func findNLatestEntries(n int) (entries []fixer.Currency, ok bool) {
 	for ; f < n && remaining >= 0; remaining-- {
 		latestDate := util.DateString(t.Date())
 		entry := fixer.Currency{}
-		if globalDB.Get("currency", bson.M{"date": latestDate}, &entry) {
+		if globalDB.Get(dbCurrencyCollection, bson.M{"date": latestDate}, &entry) {
 			entries = append(entries, entry)
 			f++
 		}
@@ -306,7 +301,7 @@ func EvaluationTriggerHandler(w http.ResponseWriter, r *http.Request) {
 	var current fixer.Currency
 	findLastEntry(&current)
 	current.Rates[current.Base] = 1
-	globalDB.GetAll("webhook", &hooks)
+	globalDB.GetAll(dbWebhookCollection, &hooks)
 	fmt.Fprintf(w, "%+v", hooks)
 	for _, hook := range hooks {
 		hookRate := current.Rates[hook.Target] / current.Rates[hook.Base]

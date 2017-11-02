@@ -50,7 +50,7 @@ func InvokeHooks(current fixer.Currency) {
 
 const (
 	fixerPath      = "base=EUR"
-	tickerInterval = time.Second /*Minute*/ * 24
+	tickerInterval = time.Minute /*Minute*/ * 24
 )
 
 func main() {
@@ -64,7 +64,6 @@ func main() {
 	Tick()
 	ticker := time.NewTicker(tickerInterval) //util.UntilTomorrow())
 	for _ = range ticker.C {
-		log.Printf("%+v: Tick!", time.Now())
 		Tick()
 	}
 }
