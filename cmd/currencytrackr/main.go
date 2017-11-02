@@ -44,7 +44,6 @@ var globalDB database.DBStorage
 
 func initializeDBConnection() {
 	var mongoDBHosts = []string{
-		"localhost",
 		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-02-qvogu.mongodb.net:27017",

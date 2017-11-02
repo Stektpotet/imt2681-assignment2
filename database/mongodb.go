@@ -45,7 +45,8 @@ func contains(s []string, e string) bool {
 
 // CreateSession - create DB Collection session
 func (db *MongoDB) CreateSession() *mgo.Session {
-	s, err := mgo.Dial("mongodb://localhost")
+	var s *mgo.Session
+	var err error
 
 	if !contains(db.HostURLs, "localhost") {
 		dialInfo := &mgo.DialInfo{
@@ -59,6 +60,8 @@ func (db *MongoDB) CreateSession() *mgo.Session {
 			Timeout: time.Second * 10,
 		}
 		s, err = mgo.DialWithInfo(dialInfo)
+	} else {
+		s, err = mgo.Dial("mongodb://localhost")
 	}
 
 	if err != nil {
