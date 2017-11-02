@@ -10,8 +10,6 @@ import (
 	"github.com/stektpotet/imt2681-assignment2/webhook"
 )
 
-var globalDB database.DBStorage
-
 const (
 	fixerPath      = "base=EUR"
 	tickerInterval = time.Minute /*Minute*/ * 10
@@ -52,6 +50,8 @@ func InvokeHooks(current fixer.Currency) {
 		}
 	}
 }
+
+var globalDB database.DBStorage
 
 func main() {
 	hosts := []string{
