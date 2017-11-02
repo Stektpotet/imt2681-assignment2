@@ -57,7 +57,7 @@ func initializeDBConnection() {
 
 func addEntriesForNPastDays(n int) {
 	t := time.Now()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < n; i++ {
 		globalDB.Add(dbCurrencyCollection, fixer.GetCurrencies(util.DateString(t.Date())))
 		t = t.AddDate(0, 0, -1)
 	}
