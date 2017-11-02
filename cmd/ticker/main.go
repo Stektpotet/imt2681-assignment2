@@ -12,6 +12,11 @@ import (
 
 var globalDB database.DBStorage
 
+const (
+	fixerPath      = "base=EUR"
+	tickerInterval = time.Minute /*Minute*/ * 10
+)
+
 func initializeDBConnection(mongoDBHosts []string) {
 
 	globalDB = &database.CurrencyMongoDB{
@@ -47,11 +52,6 @@ func InvokeHooks(current fixer.Currency) {
 		}
 	}
 }
-
-const (
-	fixerPath      = "base=EUR"
-	tickerInterval = time.Minute /*Minute*/ * 24
-)
 
 func main() {
 	hosts := []string{

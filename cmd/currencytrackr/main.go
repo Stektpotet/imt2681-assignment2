@@ -52,7 +52,8 @@ func initializeDBConnection() {
 		},
 	}
 	globalDB.Init()
-	addEntriesForNPastDays(31)
+	//To make sure there will always be at least 3 entries in the db.
+	addEntriesForNPastDays(5)
 }
 
 func addEntriesForNPastDays(n int) {
@@ -64,7 +65,6 @@ func addEntriesForNPastDays(n int) {
 }
 
 func main() {
-
 	log.Println("Running CurrencyTrackR")
 	// globalDB = &database.CurrencyDB{}
 	initializeDBConnection()
@@ -200,6 +200,13 @@ func subscriptionDelete(URLpath string) (success bool) {
 
 func LatestHandler(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusOK
+	if r.Method != http.MethodGet {
+		status = http.StatusMethodNotAllowed
+		w.WriteHeader(status)
+		fmt.Fprint(w, status, http.StatusText(status), "\nAccepted Methods: ", http.MethodPost)
+		return
+	}
+
 	writeResponse := true
 	var entry fixer.Currency
 	var conversion fixer.Conversion
