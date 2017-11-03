@@ -27,6 +27,8 @@ func initializeDBConnection(mongoDBHosts []string) {
 	globalDB.Init()
 }
 
+//Tick - Runs at an interval to continuously keep the db up to date
+//and to invoke the webhooks
 func Tick() {
 	newEntry, err := fixer.GetLatest(fixerPath)
 	if err != nil {
@@ -38,6 +40,7 @@ func Tick() {
 	}
 }
 
+//InvokeHooks - Invoke all hooks that are subscribed within the given rate
 func InvokeHooks(current fixer.Currency) {
 	hooks := []webhook.SubsciptionOut{}
 	current.Rates[current.Base] = 1

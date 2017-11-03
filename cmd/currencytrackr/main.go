@@ -200,6 +200,8 @@ func subscriptionDelete(URLpath string) (success bool) {
 	return
 }
 
+//LatestHandler - Handles requests to root/latest
+//finds the currency rating for the given base/target-conversion
 func LatestHandler(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusOK
 	if r.Method != http.MethodPost {
@@ -270,6 +272,8 @@ func findNLatestEntries(n int) (entries []fixer.Currency, ok bool) {
 	return
 }
 
+//AverageHandler - find the average currency rating for the
+//given base/target-conversion for the past three days
 func AverageHandler(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusOK
 	if r.Method != http.MethodPost {
@@ -289,12 +293,12 @@ func AverageHandler(w http.ResponseWriter, r *http.Request) {
 		writeResponse = false
 	} else {
 		json.Unmarshal(body, &conversion)
-		ok := true
-		entries, ok = findNLatestEntries(3)
+		e, ok := findNLatestEntries(3)
 		if !ok {
 			status = http.StatusNoContent
 			writeResponse = false
 		}
+		entries = e
 	}
 
 	w.WriteHeader(status)
