@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"../../database/"
 	"github.com/stektpotet/imt2681-assignment2/database"
 	"github.com/stektpotet/imt2681-assignment2/fixer"
 	"github.com/stektpotet/imt2681-assignment2/util"
