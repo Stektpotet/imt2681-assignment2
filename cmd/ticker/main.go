@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/stektpotet/imt2681-assignment2/database"
@@ -17,13 +18,11 @@ const (
 
 func initializeDBConnection(mongoDBHosts []string) {
 
-	globalDB = &database.CurrencyMongoDB{
-		MongoDB: &database.MongoDB{
-			HostURLs:  mongoDBHosts,
-			AdminUser: util.GetEnv("TRACKER_USER"),
-			AdminPass: util.GetEnv("TRACKER_PASS"),
-			Name:      "currencytrackr",
-		},
+	globalDB = &database.MongoDB{
+		HostURLs:  mongoDBHosts,
+		AdminUser: util.GetEnv("TRACKER_USER"),
+		AdminPass: util.GetEnv("TRACKER_PASS"),
+		Name:      "currencytrackr",
 	}
 	globalDB.Init()
 }
@@ -46,7 +45,7 @@ func InvokeHooks(current fixer.Currency) {
 	for _, hook := range hooks {
 		hookRate := current.Rates[hook.Target] / current.Rates[hook.Base]
 		if hook.Min <= hookRate && hook.Max >= hookRate {
-			hook.Invoke(hookRate)
+			hook.Invoke(hookRate, *http.DefaultClient)
 		}
 	}
 }

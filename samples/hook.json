@@ -1,0 +1,7 @@
+{
+    "webhookURL": "http://webhook.site/7567de2a-5010-4d4a-bf7a-5fd01dad4d5b",
+    "baseCurrency": "EUR",
+    "targetCurrency": "NOK",
+    "minTriggerValue": 9,
+    "maxTriggerValue": 10
+}

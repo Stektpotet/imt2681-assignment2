@@ -32,7 +32,7 @@ type WebhookRequestBody struct {
 	Max     float32 `json:"maxTriggerValue"`
 }
 
-func (hook *SubsciptionOut) Invoke(currentRate float32) {
+func (hook *SubsciptionOut) Invoke(currentRate float32, client http.Client) (resp *http.Response, err error) {
 	body := WebhookRequestBody{
 		hook.Base,
 		hook.Target,
@@ -44,5 +44,6 @@ func (hook *SubsciptionOut) Invoke(currentRate float32) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	http.Post(hook.URL, "application/json", bytes.NewBuffer(raw))
+	resp, err = client.Post(hook.URL, "application/json", bytes.NewBuffer(raw))
+	return
 }

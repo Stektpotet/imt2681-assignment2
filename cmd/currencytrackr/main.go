@@ -43,13 +43,11 @@ func initializeDBConnection() {
 		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
 	}
 
-	globalDB = &database.CurrencyMongoDB{
-		MongoDB: &database.MongoDB{
-			HostURLs:  mongoDBHosts,
-			AdminUser: util.GetEnv("TRACKER_USER"),
-			AdminPass: util.GetEnv("TRACKER_PASS"),
-			Name:      "currencytrackr",
-		},
+	globalDB = &database.MongoDB{
+		HostURLs:  mongoDBHosts,
+		AdminUser: util.GetEnv("TRACKER_USER"),
+		AdminPass: util.GetEnv("TRACKER_PASS"),
+		Name:      "currencytrackr",
 	}
 	globalDB.Init()
 	//To make sure there will always be at least 3 entries in the db.
@@ -156,17 +154,21 @@ func SubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func subscriptionRegister(r *http.Request) (subID string, success bool) {
-	body, err := ioutil.ReadAll(r.Body)
+	parts := strings.Split(r.URL.Path, "/") //root/api/:id, ID = parts[2]
+	if len(parts) != 3 {
+		success = false
+		return
+	}
+	rBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("Failed reading body of request: %+v", r.Body)
 	}
-	hook := webhook.SubsciptionIn{}
+
+	var hook webhook.SubsciptionIn
 	success = true
 
-	json.Unmarshal(body, &hook)
-
+	json.Unmarshal(rBody, &hook)
 	hook.HookID = bson.NewObjectId().Hex()
-	log.Printf("%s", hook.HookID)
 	err = globalDB.Add(dbWebhookCollection, hook)
 
 	subID = hook.HookID
@@ -180,7 +182,7 @@ func subscriptionGet(URLpath string) (sub webhook.SubsciptionOut, success bool) 
 	sub = webhook.SubsciptionOut{}
 	parts := strings.Split(URLpath, "/") //host/root/:id,  ID = parts[2]
 	log.Printf("%v, %v", parts, len(parts))
-	if 3 > len(parts) {
+	if len(parts) != 3 {
 		success = false
 		return
 	}
@@ -190,7 +192,7 @@ func subscriptionGet(URLpath string) (sub webhook.SubsciptionOut, success bool) 
 
 func subscriptionDelete(URLpath string) (success bool) {
 	parts := strings.Split(URLpath, "/") //root/api/:id, ID = parts[2]
-	if 3 > len(parts) {
+	if len(parts) != 3 {
 		success = false
 		return
 	} //root/api/:id
@@ -200,7 +202,7 @@ func subscriptionDelete(URLpath string) (success bool) {
 
 func LatestHandler(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusOK
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodPost {
 		status = http.StatusMethodNotAllowed
 		w.WriteHeader(status)
 		fmt.Fprint(w, status, http.StatusText(status), "\nAccepted Methods: ", http.MethodPost)
@@ -270,6 +272,12 @@ func findNLatestEntries(n int) (entries []fixer.Currency, ok bool) {
 
 func AverageHandler(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusOK
+	if r.Method != http.MethodPost {
+		status = http.StatusMethodNotAllowed
+		w.WriteHeader(status)
+		fmt.Fprint(w, status, http.StatusText(status), "\nAccepted Methods: ", http.MethodPost)
+		return
+	}
 	writeResponse := true
 	var entries []fixer.Currency
 	var conversion fixer.Conversion
@@ -312,7 +320,7 @@ func EvaluationTriggerHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%+v", hooks)
 	for _, hook := range hooks {
 		hookRate := current.Rates[hook.Target] / current.Rates[hook.Base]
-		hook.Invoke(hookRate)
+		hook.Invoke(hookRate, *http.DefaultClient)
 	}
 	//obtain database's webhook collection
 }
