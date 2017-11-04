@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func GetFromHere(url string) (resp *http.Response, err error) {
+func PostFromHere(url string) (resp *http.Response, err error) {
 	resp = &http.Response{}
 	resp.StatusCode = http.StatusOK
 	resp.Header = http.Header{}
@@ -26,6 +26,12 @@ func GetEmptyFromHere(url string) (resp *http.Response, err error) {
 }
 
 func TestSubsciptionOut_Invoke(t *testing.T) {
+
+	s := SubsciptionOut{}
+	s.Invoke(0.2)
+	http.DefaultClient.Post(url, contentType, body)
+	r, err := GetFromHere("SOMEURL.COM")
+
 	type fields struct {
 		URL    string
 		Base   string
@@ -38,13 +44,27 @@ func TestSubsciptionOut_Invoke(t *testing.T) {
 		client      http.Client
 	}
 	tests := []struct {
-		name     string
-		fields   fields
-		args     args
-		wantResp *http.Response
-		wantErr  bool
+		name   string
+		fields fields
+		// args     args
+		currentRate float32
+		wantResp    *http.Response
+		wantErr     bool
 	}{
-	// {"OK", fields{}}
+		// {"OK", fields{}}
+		{
+			name: "OK",
+			fields: fields{
+				URL:    "SOMEURL.COM",
+				Base:   "NOK",
+				Target: "EUR",
+				Min:    0.2,
+				Max:    1,
+			},
+			currentRate: 0.4,
+			wantResp:    r,
+			wantErr:     false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -55,7 +75,7 @@ func TestSubsciptionOut_Invoke(t *testing.T) {
 				Min:    tt.fields.Min,
 				Max:    tt.fields.Max,
 			}
-			gotResp, err := hook.Invoke(tt.args.currentRate, tt.args.client)
+			gotResp, err := hook.Invoke(tt.currentRate, GetFromHere)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SubsciptionOut.Invoke() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/stektpotet/imt2681-assignment2/util"
+	"github.com/Stektpotet/imt2681-assignment2/util"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

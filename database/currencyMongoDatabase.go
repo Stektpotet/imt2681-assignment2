@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/stektpotet/imt2681-assignment2/fixer"
+	"github.com/Stektpotet/imt2681-assignment2/fixer"
 	"gopkg.in/mgo.v2/bson"
 )
 

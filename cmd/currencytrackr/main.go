@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stektpotet/imt2681-assignment2/database"
-	"github.com/stektpotet/imt2681-assignment2/fixer"
-	"github.com/stektpotet/imt2681-assignment2/util"
-	"github.com/stektpotet/imt2681-assignment2/webhook"
+	"github.com/Stektpotet/imt2681-assignment2/database"
+	"github.com/Stektpotet/imt2681-assignment2/fixer"
+	"github.com/Stektpotet/imt2681-assignment2/util"
+	"github.com/Stektpotet/imt2681-assignment2/webhook"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -66,22 +66,12 @@ func main() {
 	log.Println("Running CurrencyTrackR")
 	// globalDB = &database.CurrencyDB{}
 	initializeDBConnection()
-	// Tick(globalDB)
 	http.HandleFunc(rootPath, SubscriptionHandler)
 	http.HandleFunc(latestPath, LatestHandler)
-	//find latest
-	//Check for last seven days
-	//if they dont exist, find latest
-	//find
 	http.HandleFunc(averagePath, AverageHandler)
 	http.HandleFunc(triggerPath, EvaluationTriggerHandler)
 	log.Println(util.GetEnv("PORT"))
 	http.ListenAndServe(":"+util.GetEnv("PORT"), nil)
-	//
-	// for _ = range ticker.C {
-	// 	log.Printf("%+v: Tick!", time.Now())
-	// 	Tick(globalDB)
-	// }
 }
 
 //SubscriptionHandler - Handles all subscription-related requests
@@ -326,7 +316,6 @@ func EvaluationTriggerHandler(w http.ResponseWriter, r *http.Request) {
 		hookRate := current.Rates[hook.Target] / current.Rates[hook.Base]
 		hook.Invoke(hookRate, *http.DefaultClient)
 	}
-	//obtain database's webhook collection
 }
 
 /*

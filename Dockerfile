@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-MAINTAINER Halvor Smedås <stektpotet@gmail.com>
+MAINTAINER Halvor Smedås <Stektpotet@gmail.com>
 
 WORKDIR "/opt"
 

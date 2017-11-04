@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/stektpotet/imt2681-assignment2/database"
-	"github.com/stektpotet/imt2681-assignment2/fixer"
-	"github.com/stektpotet/imt2681-assignment2/util"
-	"github.com/stektpotet/imt2681-assignment2/webhook"
+	"github.com/Stektpotet/imt2681-assignment2/database"
+	"github.com/Stektpotet/imt2681-assignment2/fixer"
+	"github.com/Stektpotet/imt2681-assignment2/util"
+	"github.com/Stektpotet/imt2681-assignment2/webhook"
 )
 
 const (

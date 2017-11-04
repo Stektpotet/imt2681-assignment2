@@ -11,10 +11,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/Stektpotet/imt2681-assignment2/database"
+	"github.com/Stektpotet/imt2681-assignment2/fixer"
+	"github.com/Stektpotet/imt2681-assignment2/webhook"
 	"github.com/golang/mock/gomock"
-	"github.com/stektpotet/imt2681-assignment2/database"
-	"github.com/stektpotet/imt2681-assignment2/fixer"
-	"github.com/stektpotet/imt2681-assignment2/webhook"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -76,39 +76,27 @@ func Expect(context string, got, expected interface{}, t *testing.T) {
 	FailOk(got == expected, t, fmt.Sprintf("%s: got %v want %v", context, got, expected))
 }
 
-func TestSubscriptionPOST(t *testing.T) {
-
-}
-func TestSubscriptionGET(t *testing.T) {
-}
-func TestSubscriptionPUT(t *testing.T) {
-}
-func TestSubscriptionDELETE(t *testing.T) {
-}
-func TestSubscriptionFULL(t *testing.T) {
-}
-func TestUpdateCurrencies(t *testing.T) {
-	// var testDB database.DBStorage
-	// testDB = &database.CurrencyDB{}
-	// testDB.Init()
-	//
-	// p := fixer.GetCurrencies("2017-10-25")
-	// testDB.Add(p)
-	// v, _ := testDB.Get(p.Date)
-	// log.Printf("Something: %+v\n\n\n", v)
-	//
-	// Tick(testDB)
-	// v, _ = testDB.Get("2017-10-27")
-	// log.Printf("Something else: %+v\n\n\n", v)
-}
-
-func TestUpdateCurrenciesMongo(t *testing.T) {
-
-}
-
 func Test_addEntriesForNPastDays(t *testing.T) {
-
-	addEntriesForNPastDays(7)
+	// DB := &globalDB
+	//
+	// expectedDates := []fixer.Currency{}
+	// time := time.Now()
+	// for i := 0; i < 7; i++ {
+	// 	f := fixer.GetCurrencies(util.DateString(time.Date()))
+	// 	expectedDates = append(expectedDates, f)
+	// 	time = time.AddDate(0, 0, -1)
+	// }
+	//
+	// c := gomock.NewController(t)
+	// defer c.Finish()
+	// mock := *database.NewMockDBStorage(c)
+	// globalDB = &mock
+	//
+	// mock.EXPECT().Add(dbCurrencyCollection, gomock.Any()).AnyTimes()
+	//
+	// addEntriesForNPastDays(7)
+	//
+	// globalDB = *DB
 
 }
 
@@ -170,6 +158,7 @@ func Test_subscriptionRegister(t *testing.T) {
 }
 
 func Test_subscriptionGet(t *testing.T) {
+
 	type args struct {
 		URLpath string
 	}
