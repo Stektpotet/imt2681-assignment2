@@ -12,12 +12,6 @@ const (
 	latestPath   = fixerBaseURL + "latest"
 )
 
-// type CurrencyOut struct {
-// 	Base  string             `json:"base"`
-// 	Date  string             `json:"date"`
-// 	Rates map[string]float32 `json:"rates"`
-// }
-
 type Currency struct {
 	Base  string             `json:"base"`
 	Date  string             `json:"date"`

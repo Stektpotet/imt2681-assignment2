@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/stektpotet/imt2681-assignment2/fixer"
+	"github.com/Stektpotet/imt2681-assignment2/fixer"
 )
 
 func Test_initializeDBConnection(t *testing.T) {
