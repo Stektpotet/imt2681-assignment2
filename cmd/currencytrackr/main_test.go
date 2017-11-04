@@ -48,18 +48,22 @@ func FailOkf(ok bool, t *testing.T, context string, args ...interface{}) {
 
 func TestMain(m *testing.M) {
 	var mongoDBHosts = []string{
-		"localhost",
+		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
+		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
+		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
 	}
 
 	globalDB = &database.MongoDB{
-		HostURLs: mongoDBHosts,
-		Name:     "test",
+		HostURLs:  mongoDBHosts,
+		AdminUser: "tester",
+		AdminPass: "WA9LI7f2DbVQtvbM",
+		Name:      "test",
 	}
 	globalDB.Init()
 
 	c := m.Run()
 
-	// globalDB.Drop()
+	globalDB.Drop()
 	os.Exit(c)
 }
 
@@ -207,7 +211,7 @@ var conversionRequest = func(method, path string, body bool) *http.Request {
 	if body {
 		r, err := ioutil.ReadFile("../../samples/conversion.json")
 		if err != nil {
-			panic(err)
+			panic("Could not read conversion file " + err.Error())
 		}
 		raw = r
 	}
@@ -219,6 +223,11 @@ var conversionRequest = func(method, path string, body bool) *http.Request {
 }
 
 func TestLatestHandler(t *testing.T) {
+	latest, err := fixer.GetLatest("")
+	if err != nil {
+		panic(err)
+	}
+	globalDB.Add("currency", latest) //Make sure there is a "latest entry"
 
 	tests := []struct {
 		name     string
@@ -237,9 +246,9 @@ func TestLatestHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rr := httptest.NewRecorder()
-			hfunc := http.HandlerFunc(LatestHandler)
-			hfunc.ServeHTTP(rr, tt.r)
-			// SubscriptionHandler(rr, tt.r)
+			// hfunc := http.HandlerFunc(LatestHandler)
+			// hfunc.ServeHTTP(rr, tt.r)
+			LatestHandler(rr, tt.r)
 			Expect("Wrong Status Code", rr.Code, tt.wantCode, t)
 		})
 	}

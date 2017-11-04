@@ -80,7 +80,6 @@ func main() {
 // POST:    root/api/
 // DELETE:  root/api/:id
 func SubscriptionHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Entered SubscriptionHandler")
 	status := http.StatusOK
 	writeStatus := true
 	response := []byte{}
@@ -89,7 +88,6 @@ func SubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		//REGISTER SUBSCRIPTION
-		log.Println("POST")
 		r, ok := subscriptionRegister(r)
 		if ok {
 			log.Println("Subscription registered!")
@@ -202,8 +200,8 @@ func LatestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse := true
-	var entry fixer.Currency
-	var conversion fixer.Conversion
+	entry := fixer.Currency{}
+	conversion := fixer.Conversion{}
 	//Obtain requested conversion as object
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -217,9 +215,9 @@ func LatestHandler(w http.ResponseWriter, r *http.Request) {
 			writeResponse = false
 		}
 	}
-	entry.Rates[entry.Base] = 1 //ensure a given value for this systems base Currency
 	w.WriteHeader(status)
 	if writeResponse {
+		entry.Rates[entry.Base] = 1 //ensure a given value for this systems base Currency
 		fmt.Fprint(w, entry.Rates[conversion.Target]/entry.Rates[conversion.Base])
 	} else {
 		fmt.Fprint(w, status, http.StatusText(status))
@@ -243,7 +241,7 @@ func findLastEntry(entry *fixer.Currency) bool {
 func findNLatestEntries(n int) (entries []fixer.Currency, ok bool) {
 	ok = false
 	t := time.Now()
-	entries = []fixer.Currency{}
+	entries = make([]fixer.Currency, 0, n)
 	remaining := globalDB.Count(dbCurrencyCollection)
 	if remaining < n {
 		return //too few entries
