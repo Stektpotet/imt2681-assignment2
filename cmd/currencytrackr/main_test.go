@@ -14,22 +14,10 @@ import (
 
 	"github.com/Stektpotet/imt2681-assignment2/database"
 	"github.com/Stektpotet/imt2681-assignment2/fixer"
+	"github.com/Stektpotet/imt2681-assignment2/util"
 	"github.com/Stektpotet/imt2681-assignment2/webhook"
 	"gopkg.in/mgo.v2/bson"
 )
-
-//
-// func TestIInit(t *testing.T) {
-// 	mockctrl := gomock.NewController(t)
-// 	defer mockctrl.Finish()
-// 	mock := NewMockDBService(mockctrl)
-// 	initCall := mock.EXPECT().init().Times(1)
-// 	mock.EXPECT().Insert("Something").Times(2).After(initCall)
-// 	mock.EXPECT().Count().AnyTimes().After(initCall)
-//
-// 	//Invoke test
-// 	Invoke(mock)
-// }
 
 func Fail(err error, t *testing.T) {
 	if err != nil {
@@ -49,11 +37,11 @@ func FailOkf(ok bool, t *testing.T, context string, args ...interface{}) {
 
 func TestMain(m *testing.M) {
 	var mongoDBHosts = []string{
-		// "localhost",
 		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
 	}
+	log.Print(util.GetEnv("TRACKER_USER"))
 	globalDB = &database.MongoDB{
 		HostURLs:  mongoDBHosts,
 		AdminUser: "tester",
@@ -220,18 +208,47 @@ var conversionRequest = func(method, path string, body bool) *http.Request {
 		}
 		return rWithBody
 	}
-	rNoBody, err := http.NewRequest(method, path, nil)
+	rNoBody, err := http.NewRequest(method, path, bytes.NewBufferString(""))
 	if err != nil {
 		log.Fatal(err)
 	}
 	return rNoBody
 }
 
+func Test_findLastEntry(t *testing.T) {
+	latest, err := fixer.GetLatest("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	globalDB.DropCollection(dbCurrencyCollection)
+	err = globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name  string
+		entry *fixer.Currency
+		want  bool
+	}{
+		{"OK", &latest, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findLastEntry(tt.entry); got != tt.want {
+				t.Errorf("findLastEntry() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
+	globalDB.DropCollection(dbCurrencyCollection)
+}
+
 func TestLatestHandler(t *testing.T) {
 
 	globalDB.DropCollection(dbWebhookCollection)
 
-	t.SkipNow()
 	latest, err := fixer.GetLatest("")
 	if err != nil {
 		t.Fatal(err)
@@ -267,36 +284,6 @@ func TestLatestHandler(t *testing.T) {
 	globalDB.DropCollection(dbCurrencyCollection)
 }
 
-func Test_findLastEntry(t *testing.T) {
-	latest, err := fixer.GetLatest("")
-	if err != nil {
-		t.Fatal(err)
-	}
-	globalDB.DropCollection(dbCurrencyCollection)
-	err = globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tests := []struct {
-		name  string
-		entry *fixer.Currency
-		want  bool
-	}{
-		{"OK", &latest, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := findLastEntry(tt.entry); got != tt.want {
-				t.Errorf("findLastEntry() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-
-	globalDB.DropCollection(dbCurrencyCollection)
-}
-
 func Test_findNLatestEntries(t *testing.T) {
 	type args struct {
 		n int
@@ -325,7 +312,6 @@ func Test_findNLatestEntries(t *testing.T) {
 func TestAverageHandler(t *testing.T) {
 
 	globalDB.DropCollection(dbWebhookCollection)
-	t.SkipNow()
 	addEntriesForNPastDays(7)
 
 	tests := []struct {
@@ -337,7 +323,7 @@ func TestAverageHandler(t *testing.T) {
 		{"Valid 1", conversionRequest(http.MethodPost, "average", true), http.StatusOK},
 		{"Valid 2", conversionRequest(http.MethodPost, "average/", true), http.StatusOK},
 		//Missing Body
-		{"Bad Request, no body", conversionRequest(http.MethodPost, "average/", false), http.StatusBadRequest},
+		{"Bad Request, no body", conversionRequest(http.MethodPost, "average/", false), http.StatusBadRequest}, //Cant make "NO BODY"
 		//Nonallowed Method
 		{"Method not allowed", conversionRequest(http.MethodGet, "average/", true), http.StatusMethodNotAllowed},
 		{"Method not allowed", conversionRequest(http.MethodGet, "average", true), http.StatusMethodNotAllowed},
@@ -417,31 +403,30 @@ func TestSubscriptionHandlerMethods(t *testing.T) {
 		{"Invalid path Get", subGetRequest("/a/sd/"), http.StatusNotFound},
 		//POST
 		{"ValidPost", subPostRequest("", true), http.StatusCreated},
-		{"Missing body", subPostRequest("", false), http.StatusBadRequest},
+		{"Missing body", subPostRequest("", false), http.StatusBadRequest}, //Unable to make missing body
 		{"Invalid path Post", subPostRequest("/sa/asd", false), http.StatusBadRequest},
 		//DELETE
 		{"ValidDelete", subDeleteRequest(sub.HookID), http.StatusAccepted},
 		{"NonExisting hook id Delete", subDeleteRequest("oooooo"), http.StatusNotFound},
 		{"Invalid path Delete", subDeleteRequest("/a/sd/"), http.StatusNotFound},
 		//PUT
-		{"Invalid path Put", subMethodResuest(http.MethodPut), http.StatusNotImplemented},
+		{"Invalid method: Put", subMethodResuest(http.MethodPut), http.StatusNotImplemented},
 		//HEAD
-		{"Invalid path Head", subMethodResuest(http.MethodHead), http.StatusMethodNotAllowed},
+		{"Invalid method: Head", subMethodResuest(http.MethodHead), http.StatusMethodNotAllowed},
 		//PATCH
-		{"Invalid path Patch", subMethodResuest(http.MethodPatch), http.StatusMethodNotAllowed},
+		{"Invalid method: Patch", subMethodResuest(http.MethodPatch), http.StatusMethodNotAllowed},
 		//TRACE
-		{"Invalid path Trace", subMethodResuest(http.MethodTrace), http.StatusMethodNotAllowed},
+		{"Invalid method: Trace", subMethodResuest(http.MethodTrace), http.StatusMethodNotAllowed},
 		//CONNECT
-		{"Invalid path Connect", subMethodResuest(http.MethodConnect), http.StatusMethodNotAllowed},
+		{"Invalid method: Connect", subMethodResuest(http.MethodConnect), http.StatusMethodNotAllowed},
 		//OPTIONS
-		{"Invalid path Options", subMethodResuest(http.MethodOptions), http.StatusMethodNotAllowed},
+		{"Invalid method: Options", subMethodResuest(http.MethodOptions), http.StatusMethodNotAllowed},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rr := httptest.NewRecorder()
 			hfunc := http.HandlerFunc(SubscriptionHandler)
 			hfunc.ServeHTTP(rr, tt.r)
-			// SubscriptionHandler(rr, tt.r)
 			Expect("Wrong Status Code", rr.Code, tt.wantCode, t)
 		})
 	}

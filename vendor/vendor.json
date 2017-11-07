@@ -15,6 +15,12 @@
 			"revisionTime": "2017-10-20T16:37:50Z"
 		},
 		{
+			"checksumSHA1": "TroUrCnO7mVi4ZB+I5t4gXJZdE0=",
+			"path": "github.com/subosito/gotenv",
+			"revision": "009e1f9581dc712aba5682a279dee155ca3eeded",
+			"revisionTime": "2017-01-20T14:09:13Z"
+		},
+		{
 			"checksumSHA1": "GtamqiJoL7PGHsN454AoffBFMa8=",
 			"path": "golang.org/x/net/context",
 			"revision": "01c190206fbdffa42f334f4b2bf2220f50e64920",
@@ -43,6 +49,10 @@
 			"path": "gopkg.in/mgo.v2/internal/scram",
 			"revision": "3f83fa5005286a7fe593b055f0d7771a7dce4655",
 			"revisionTime": "2016-08-18T02:01:20Z"
+		},
+		{
+			"path": "gotenv",
+			"revision": ""
 		}
 	],
 	"rootPath": "github.com/Stektpotet/imt2681-assignment2"

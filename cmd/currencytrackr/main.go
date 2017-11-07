@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -36,6 +37,10 @@ const ( // OTHER CONSTSTANTS
 
 var globalDB database.DBStorage
 
+func GetEnv(key string) string {
+	return os.Getenv(key)
+}
+
 func initializeDBConnection() {
 	var mongoDBHosts = []string{
 		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
@@ -51,6 +56,7 @@ func initializeDBConnection() {
 	}
 	globalDB.Init()
 	//To make sure there will always be at least 3 entries in the db.
+	//(saturday/sunday wont have new entries)
 	addEntriesForNPastDays(5)
 }
 
