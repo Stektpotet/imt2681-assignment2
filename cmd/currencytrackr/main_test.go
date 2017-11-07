@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -48,11 +49,11 @@ func FailOkf(ok bool, t *testing.T, context string, args ...interface{}) {
 
 func TestMain(m *testing.M) {
 	var mongoDBHosts = []string{
+		// "localhost",
 		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
 	}
-
 	globalDB = &database.MongoDB{
 		HostURLs:  mongoDBHosts,
 		AdminUser: "tester",
@@ -60,9 +61,8 @@ func TestMain(m *testing.M) {
 		Name:      "test",
 	}
 	globalDB.Init()
-
+	globalDB.Drop()
 	c := m.Run()
-
 	globalDB.Drop()
 	os.Exit(c)
 }
@@ -108,29 +108,30 @@ var subscriptionRequest = func(method, ID string, body bool) *http.Request {
 	if body {
 		r, err := ioutil.ReadFile("../../samples/hook.json")
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		raw = r
 	}
 	r, err := http.NewRequest(method, rootPath+ID, bytes.NewBuffer(raw))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	return r
 }
 
 func TestSubscriptionHandlerRRR(t *testing.T) {
 
+	globalDB.DropCollection(dbWebhookCollection)
+
 	var rSub webhook.SubsciptionOut
 	r := subscriptionRequest(http.MethodPost, "", true)
 	rBody, err := ioutil.ReadAll(r.Body)
 	Fail(err, t)
-
 	json.Unmarshal(rBody, &rSub)
 	r = subscriptionRequest(http.MethodPost, "", true)
 	id, ok := subscriptionRegister(r)
 
-	FailOkf(ok, t, "subscribing with %+v should register, but does not.", r)
+	FailOkf(ok, t, "subscribing with %+v should register, but does not.", *r)
 
 	hookIDPath := r.URL.Path + id
 	sub, ok := subscriptionGet(hookIDPath)
@@ -139,6 +140,7 @@ func TestSubscriptionHandlerRRR(t *testing.T) {
 
 	r.Method = http.MethodDelete
 	subscriptionDelete(hookIDPath)
+
 }
 
 func Test_subscriptionRegister(t *testing.T) {
@@ -207,28 +209,38 @@ func Test_subscriptionDelete(t *testing.T) {
 }
 
 var conversionRequest = func(method, path string, body bool) *http.Request {
-	raw := []byte{}
 	if body {
-		r, err := ioutil.ReadFile("../../samples/conversion.json")
+		raw, err := ioutil.ReadFile("../../samples/conversion.json")
 		if err != nil {
-			panic("Could not read conversion file " + err.Error())
+			log.Fatal("Could not read conversion file " + err.Error())
 		}
-		raw = r
+		rWithBody, err := http.NewRequest(method, path, bytes.NewBuffer(raw))
+		if err != nil {
+			log.Fatal(err)
+		}
+		return rWithBody
 	}
-	r, err := http.NewRequest(method, path, bytes.NewBuffer(raw))
+	rNoBody, err := http.NewRequest(method, path, nil)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	return r
+	return rNoBody
 }
 
 func TestLatestHandler(t *testing.T) {
+
+	globalDB.DropCollection(dbWebhookCollection)
+
+	t.SkipNow()
 	latest, err := fixer.GetLatest("")
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
-	globalDB.Add("currency", latest) //Make sure there is a "latest entry"
+	err = globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
 
+	if err != nil {
+		t.Fatal(err)
+	}
 	tests := []struct {
 		name     string
 		r        *http.Request
@@ -246,32 +258,43 @@ func TestLatestHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rr := httptest.NewRecorder()
-			// hfunc := http.HandlerFunc(LatestHandler)
-			// hfunc.ServeHTTP(rr, tt.r)
-			LatestHandler(rr, tt.r)
+			hfunc := http.HandlerFunc(LatestHandler)
+			hfunc.ServeHTTP(rr, tt.r)
+
 			Expect("Wrong Status Code", rr.Code, tt.wantCode, t)
 		})
 	}
+	globalDB.DropCollection(dbCurrencyCollection)
 }
 
 func Test_findLastEntry(t *testing.T) {
-	type args struct {
-		entry *fixer.Currency
+	latest, err := fixer.GetLatest("")
+	if err != nil {
+		t.Fatal(err)
 	}
+	globalDB.DropCollection(dbCurrencyCollection)
+	err = globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []struct {
-		name string
-		args args
-		want bool
+		name  string
+		entry *fixer.Currency
+		want  bool
 	}{
-	// TODO: Add test cases.
+		{"OK", &latest, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := findLastEntry(tt.args.entry); got != tt.want {
+			if got := findLastEntry(tt.entry); got != tt.want {
 				t.Errorf("findLastEntry() = %v, want %v", got, tt.want)
 			}
 		})
 	}
+
+	globalDB.DropCollection(dbCurrencyCollection)
 }
 
 func Test_findNLatestEntries(t *testing.T) {
@@ -300,6 +323,11 @@ func Test_findNLatestEntries(t *testing.T) {
 }
 
 func TestAverageHandler(t *testing.T) {
+
+	globalDB.DropCollection(dbWebhookCollection)
+	t.SkipNow()
+	addEntriesForNPastDays(7)
+
 	tests := []struct {
 		name     string
 		r        *http.Request
@@ -323,6 +351,8 @@ func TestAverageHandler(t *testing.T) {
 			Expect("Wrong Status Code", rr.Code, tt.wantCode, t)
 		})
 	}
+
+	globalDB.DropCollection(dbCurrencyCollection)
 }
 
 func TestEvaluationTriggerHandler(t *testing.T) {
@@ -364,14 +394,17 @@ var subMethodResuest = func(method string) *http.Request {
 }
 
 func TestSubscriptionHandlerMethods(t *testing.T) {
+
+	globalDB.DropCollection(dbWebhookCollection)
+
 	raw, err := ioutil.ReadFile("../../samples/hook.json")
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	sub := &webhook.SubsciptionIn{}
 	json.Unmarshal(raw, sub)
 	sub.HookID = bson.NewObjectId().Hex()
-	globalDB.Add("webhook", sub)
+	globalDB.Add(dbWebhookCollection, sub)
 
 	tests := []struct {
 		name     string

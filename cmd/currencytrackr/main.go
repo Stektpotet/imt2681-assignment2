@@ -90,7 +90,6 @@ func SubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 		//REGISTER SUBSCRIPTION
 		r, ok := subscriptionRegister(r)
 		if ok {
-			log.Println("Subscription registered!")
 			status = http.StatusCreated
 			writeResponse = true
 			writeStatus = false
@@ -169,7 +168,6 @@ func subscriptionRegister(r *http.Request) (subID string, success bool) {
 func subscriptionGet(URLpath string) (sub webhook.SubsciptionOut, success bool) {
 	sub = webhook.SubsciptionOut{}
 	parts := strings.Split(URLpath, "/") //host/root/:id,  ID = parts[2]
-	log.Printf("%v, %v", parts, len(parts))
 	if len(parts) != 3 {
 		success = false
 		return
@@ -200,17 +198,23 @@ func LatestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse := true
-	entry := fixer.Currency{}
+	entry := new(fixer.Currency)
 	conversion := fixer.Conversion{}
 	//Obtain requested conversion as object
-	body, err := ioutil.ReadAll(r.Body)
+	// body, err := ioutil.ReadAll(r.Body)
+	err := json.NewDecoder(r.Body).Decode(&conversion)
 	if err != nil {
 		log.Printf("Failed reading body of request: %+v", r.Body)
 		status = http.StatusBadRequest //400
 		writeResponse = false
 	} else {
-		json.Unmarshal(body, &conversion)
-		if !findLastEntry(&entry) { //No date exists
+		// err := json.Unmarshal(body, &conversion)
+		// if err != nil {
+		// 	log.Printf("Failed reading body of request: %+v", r.Body)
+		// 	status = http.StatusBadRequest //400
+		// 	writeResponse = false
+		// }
+		if !findLastEntry(entry) { //No date exists
 			status = http.StatusNoContent
 			writeResponse = false
 		}
@@ -229,10 +233,9 @@ func findLastEntry(entry *fixer.Currency) bool {
 	n := time.Now()
 	entriesRemaining := globalDB.Count(dbCurrencyCollection)
 	found := false
-	for !found && entriesRemaining >= 0 {
+	for !found && entriesRemaining+5 >= 0 {
 		latestDate := util.DateString(n.Date())
 		found = globalDB.Get(dbCurrencyCollection, bson.M{"date": latestDate}, entry)
-		entriesRemaining--
 		n = n.AddDate(0, 0, -1)
 	}
 	return found
@@ -247,7 +250,7 @@ func findNLatestEntries(n int) (entries []fixer.Currency, ok bool) {
 		return //too few entries
 	}
 	f := 0
-	for ; f < n && remaining >= 0; remaining-- {
+	for ; f < n && remaining+5 >= 0; remaining-- {
 		latestDate := util.DateString(t.Date())
 		entry := fixer.Currency{}
 		if globalDB.Get(dbCurrencyCollection, bson.M{"date": latestDate}, &entry) {
@@ -281,6 +284,11 @@ func AverageHandler(w http.ResponseWriter, r *http.Request) {
 		writeResponse = false
 	} else {
 		json.Unmarshal(body, &conversion)
+		if err != nil {
+			log.Printf("Failed reading body of request: %+v", r.Body)
+			status = http.StatusBadRequest //400
+			writeResponse = false
+		}
 		e, ok := findNLatestEntries(3)
 		if !ok {
 			status = http.StatusNoContent
@@ -315,13 +323,3 @@ func EvaluationTriggerHandler(w http.ResponseWriter, r *http.Request) {
 		hook.Invoke(hookRate, *http.DefaultClient)
 	}
 }
-
-/*
-
-TODO:
--
-- Eventtriggers
-- URL to 'hook'
-- Payload format
-
-*/
