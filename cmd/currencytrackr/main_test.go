@@ -14,7 +14,6 @@ import (
 
 	"github.com/Stektpotet/imt2681-assignment2/database"
 	"github.com/Stektpotet/imt2681-assignment2/fixer"
-	"github.com/Stektpotet/imt2681-assignment2/util"
 	"github.com/Stektpotet/imt2681-assignment2/webhook"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -41,7 +40,6 @@ func TestMain(m *testing.M) {
 		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
 	}
-	log.Print(util.GetEnv("TRACKER_USER"))
 	globalDB = &database.MongoDB{
 		HostURLs:  mongoDBHosts,
 		AdminUser: "tester",

@@ -153,21 +153,26 @@ func subscriptionRegister(r *http.Request) (subID string, success bool) {
 		return
 	}
 	rBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	if err != nil { //failed to read body, i.e. bad request
 		log.Printf("Failed reading body of request: %+v", r.Body)
+		success = false
+		return
 	}
 
 	var hook webhook.SubsciptionIn
-	success = true
 
-	json.Unmarshal(rBody, &hook)
+	err = json.Unmarshal(rBody, &hook)
+	if err != nil { //falied to unmarshal, don't add to db
+		success = false
+		return
+	}
 	hook.HookID = bson.NewObjectId().Hex()
 	err = globalDB.Add(dbWebhookCollection, hook)
-
-	subID = hook.HookID
-	if err != nil {
+	if err != nil { //failed adding to db, don't return success
 		success = false
+		return
 	}
+	subID = hook.HookID
 	return
 }
 
