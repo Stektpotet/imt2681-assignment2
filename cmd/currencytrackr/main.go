@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -36,10 +35,6 @@ const ( // OTHER CONSTSTANTS
 )
 
 var globalDB database.DBStorage
-
-func GetEnv(key string) string {
-	return os.Getenv(key)
-}
 
 func initializeDBConnection() {
 	var mongoDBHosts = []string{

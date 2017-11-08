@@ -12,6 +12,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+//DBStorage - Interface of a MongoDB database
 type DBStorage interface {
 	CreateSession() *mgo.Session
 	Init()
@@ -24,6 +25,7 @@ type DBStorage interface {
 	Drop()
 }
 
+//MongoDB - MongoDB database
 type MongoDB struct {
 	HostURLs  []string
 	AdminUser string
@@ -65,6 +67,7 @@ func (db *MongoDB) CreateSession() *mgo.Session {
 
 }
 
+//Init - initialize database object db with essential properties for use in this system
 func (db *MongoDB) Init() {
 	session := db.CreateSession()
 	defer session.Close()
@@ -89,13 +92,15 @@ func (db *MongoDB) ensureIndex(s *mgo.Session, c string, i mgo.Index) {
 	}
 }
 
-func (db *MongoDB) Add(collection string, record interface{}) (err error) {
+//Add - Adds element to the collection
+func (db *MongoDB) Add(collection string, element interface{}) (err error) {
 	session := db.CreateSession()
 	defer session.Close()
-	err = session.DB(db.Name).C(collection).Insert(record)
+	err = session.DB(db.Name).C(collection).Insert(element)
 	return
 }
 
+//Count - Count elements in collection
 func (db *MongoDB) Count(collection string) int {
 	session := db.CreateSession()
 	defer session.Close()
@@ -106,6 +111,8 @@ func (db *MongoDB) Count(collection string) int {
 	}
 	return count
 }
+
+//Get - retrieve an element from a collection where the element matches the query
 func (db *MongoDB) Get(collection string, query bson.M, data interface{}) (ok bool) {
 	session := db.CreateSession()
 	defer session.Close()
@@ -119,6 +126,7 @@ func (db *MongoDB) Get(collection string, query bson.M, data interface{}) (ok bo
 	return
 }
 
+//Delete - remove all elements in collection matching the query
 func (db *MongoDB) Delete(collection string, query bson.M) (ok bool) {
 	session := db.CreateSession()
 	defer session.Close()
@@ -132,6 +140,7 @@ func (db *MongoDB) Delete(collection string, query bson.M) (ok bool) {
 	return
 }
 
+//GetAll - retrieve all elements in a collection
 func (db *MongoDB) GetAll(collection string, data interface{}) {
 	session := db.CreateSession()
 	defer session.Close()
@@ -144,6 +153,7 @@ func (db *MongoDB) GetAll(collection string, data interface{}) {
 	return
 }
 
+//DropCollection - Drop the specified collection
 func (db *MongoDB) DropCollection(collection string) {
 	session := db.CreateSession()
 	defer session.Close()
@@ -154,6 +164,8 @@ func (db *MongoDB) DropCollection(collection string) {
 	}
 	return
 }
+
+//Drop - Drop the database, (Init will restore it if called afterwards)
 func (db *MongoDB) Drop() {
 	session := db.CreateSession()
 	defer session.Close()
