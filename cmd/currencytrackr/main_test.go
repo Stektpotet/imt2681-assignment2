@@ -105,7 +105,7 @@ var subscriptionRequest = func(method, ID string, body bool) *http.Request {
 	return r
 }
 
-func TestSubscriptionHandlerRRR(t *testing.T) {
+func TestSubscriptionPostGetDelete(t *testing.T) {
 
 	globalDB.DropCollection(dbWebhookCollection)
 

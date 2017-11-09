@@ -168,6 +168,7 @@ func subscriptionRegister(r *http.Request) (subID string, success bool) {
 		return
 	}
 	subID = hook.HookID
+	success = true
 	return
 }
 
