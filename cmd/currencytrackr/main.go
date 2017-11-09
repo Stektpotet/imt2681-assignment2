@@ -149,7 +149,7 @@ func subscriptionRegister(r *http.Request) (subID string, success bool) {
 	}
 	rBody, err := ioutil.ReadAll(r.Body)
 	if err != nil { //failed to read body, i.e. bad request
-		log.Printf("Failed reading body of request: %+v", r.Body)
+		fmt.Printf("Failed reading body of request: %+v", r.Body)
 		success = false
 		return
 	}
@@ -210,7 +210,7 @@ func LatestHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&conversion)
 	if err != nil {
-		log.Printf("Failed reading body of request: %+v", r.Body)
+		fmt.Printf("Failed reading body of request: %+v", r.Body)
 		status = http.StatusBadRequest //400
 		writeResponse = false
 	} else {
@@ -280,7 +280,7 @@ func AverageHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&conversion)
 	if err != nil {
-		log.Printf("Failed reading body of request: %+v", r.Body)
+		fmt.Printf("Failed reading body of request: %+v", r.Body)
 		status = http.StatusBadRequest //400
 		writeResponse = false
 	} else {

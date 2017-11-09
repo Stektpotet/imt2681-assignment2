@@ -119,7 +119,6 @@ func (db *MongoDB) Get(collection string, query bson.M, data interface{}) (ok bo
 
 	ok = true
 	err := session.DB(db.Name).C(collection).Find(query).One(data)
-	log.Print()
 	if err != nil {
 		ok = false
 	}

@@ -2,7 +2,7 @@ package fixer
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 )
 
@@ -48,12 +48,13 @@ func getCurrencies(constraints string, getter getFunc) (payload Currency) {
 	response, err := getter(fixerBaseURL + constraints)
 	defer response.Body.Close()
 	if err != nil {
-		log.Printf("Failed obtaining currencies: %+v", err.Error())
+		fmt.Printf("Failed obtaining currencies: %+v", err.Error())
 		return
 	}
 	err = json.NewDecoder(response.Body).Decode(&payload)
 	if err != nil {
-		log.Fatalf("Failed decoding Fixer-payload:%+v", err)
+		fmt.Printf("Failed decoding Fixer-payload:%+v", err)
+		panic(err)
 	}
 	return
 }

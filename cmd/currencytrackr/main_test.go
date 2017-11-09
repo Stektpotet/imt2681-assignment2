@@ -11,9 +11,11 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/Stektpotet/imt2681-assignment2/database"
 	"github.com/Stektpotet/imt2681-assignment2/fixer"
+	"github.com/Stektpotet/imt2681-assignment2/util"
 	"github.com/Stektpotet/imt2681-assignment2/webhook"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -47,7 +49,8 @@ func TestMain(m *testing.M) {
 		Name:      "test",
 	}
 	globalDB.Init()
-	globalDB.Drop()
+	globalDB.DropCollection(dbWebhookCollection)
+	globalDB.DropCollection(dbCurrencyCollection)
 	c := m.Run()
 	globalDB.Drop()
 	os.Exit(c)
@@ -214,9 +217,15 @@ var conversionRequest = func(method, path string, body bool) *http.Request {
 }
 
 func Test_findLastEntry(t *testing.T) {
+	sw := time.Now()
 	latest := fixer.GetLatest("")
+	util.Benchmark("GetLatest", sw)
+	sw = time.Now()
 	globalDB.DropCollection(dbCurrencyCollection)
+	util.Benchmark("DropCollection", sw)
+	sw = time.Now()
 	err := globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
+	util.Benchmark("Add", sw)
 
 	if err != nil {
 		t.Fatal(err)
@@ -264,15 +273,23 @@ func TestLatestHandler(t *testing.T) {
 		{"Method not allowed", conversionRequest(http.MethodGet, "latest/", true), http.StatusMethodNotAllowed},
 		{"Method not allowed", conversionRequest(http.MethodGet, "latest", true), http.StatusMethodNotAllowed},
 	}
+	// testCompleteChan := make(chan string, len(tests))
 	for _, tt := range tests {
+		// go func() {
 		t.Run(tt.name, func(t *testing.T) {
 			rr := httptest.NewRecorder()
 			hfunc := http.HandlerFunc(LatestHandler)
 			hfunc.ServeHTTP(rr, tt.r)
 
 			Expect("Wrong Status Code", rr.Code, tt.wantCode, t)
+			// testCompleteChan <- tt.name
 		})
+		// }()
 	}
+	// for testIndex := 0; testIndex < len(tests); testIndex++ {
+	// 	test := <-testCompleteChan
+	// 	t.Logf("%s completed", test)
+	// }
 	globalDB.DropCollection(dbCurrencyCollection)
 }
 
