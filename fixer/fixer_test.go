@@ -1,28 +1,48 @@
 package fixer
 
 import (
+	"bytes"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"reflect"
 	"testing"
 )
 
-func TestGetLatest(t *testing.T) {
-
-	type args struct {
-		constraints string
+func GetFromHere(url string) (resp *http.Response, err error) {
+	resp = &http.Response{}
+	data, err := ioutil.ReadFile("../samples/base.json")
+	if err != nil {
+		log.Fatal("Unable to read local sample file")
 	}
+	resp.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+	return
+}
+
+func TestGetLatest(t *testing.T) {
+	wantedPayload := Currency{}
+	r, _ := GetFromHere("")
+
+	rBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Error(err)
+	}
+	err = json.Unmarshal(rBody, &wantedPayload)
+	if err != nil {
+		t.Error(err)
+	}
+
 	tests := []struct {
 		name        string
-		args        args
+		constraints string
 		wantPayload Currency
-		wantErr     bool
-	}{}
+	}{
+		{"Test 1", "", wantedPayload},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotPayload, err := GetLatest(tt.args.constraints)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetLatest() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			gotPayload := getLatest(tt.constraints, GetFromHere)
 			if !reflect.DeepEqual(gotPayload, tt.wantPayload) {
 				t.Errorf("GetLatest() = %v, want %v", gotPayload, tt.wantPayload)
 			}
@@ -31,20 +51,30 @@ func TestGetLatest(t *testing.T) {
 }
 
 func TestGetCurrencies(t *testing.T) {
-	type args struct {
-		constraints string
+	wantedPayload := Currency{}
+	r, _ := GetFromHere("")
+
+	rBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Error(err)
 	}
+	err = json.Unmarshal(rBody, &wantedPayload)
+	if err != nil {
+		t.Error(err)
+	}
+
 	tests := []struct {
 		name        string
-		args        args
+		constraints string
 		wantPayload Currency
 	}{
-	// TODO: Add test cases.
+		{"Test 1", "", wantedPayload},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotPayload := GetCurrencies(tt.args.constraints); !reflect.DeepEqual(gotPayload, tt.wantPayload) {
-				t.Errorf("GetCurrencies() = %v, want %v", gotPayload, tt.wantPayload)
+			gotPayload := getCurrencies(tt.constraints, GetFromHere)
+			if !reflect.DeepEqual(gotPayload, tt.wantPayload) {
+				t.Errorf("GetLatest() = %v, want %v", gotPayload, tt.wantPayload)
 			}
 		})
 	}

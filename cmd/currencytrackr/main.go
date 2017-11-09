@@ -207,20 +207,13 @@ func LatestHandler(w http.ResponseWriter, r *http.Request) {
 	writeResponse := true
 	entry := new(fixer.Currency)
 	conversion := fixer.Conversion{}
-	//Obtain requested conversion as object
-	// body, err := ioutil.ReadAll(r.Body)
+
 	err := json.NewDecoder(r.Body).Decode(&conversion)
 	if err != nil {
 		log.Printf("Failed reading body of request: %+v", r.Body)
 		status = http.StatusBadRequest //400
 		writeResponse = false
 	} else {
-		// err := json.Unmarshal(body, &conversion)
-		// if err != nil {
-		// 	log.Printf("Failed reading body of request: %+v", r.Body)
-		// 	status = http.StatusBadRequest //400
-		// 	writeResponse = false
-		// }
 		if !findLastEntry(entry) { //No date exists
 			status = http.StatusNoContent
 			writeResponse = false
@@ -280,34 +273,29 @@ func AverageHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, status, http.StatusText(status), "\nAccepted Methods: ", http.MethodPost)
 		return
 	}
+
 	writeResponse := true
-	var entries []fixer.Currency
-	var conversion fixer.Conversion
-	//Obtain requested conversion as object
-	body, err := ioutil.ReadAll(r.Body)
+	entries := new([]fixer.Currency)
+	conversion := fixer.Conversion{}
+
+	err := json.NewDecoder(r.Body).Decode(&conversion)
 	if err != nil {
 		log.Printf("Failed reading body of request: %+v", r.Body)
 		status = http.StatusBadRequest //400
 		writeResponse = false
 	} else {
-		json.Unmarshal(body, &conversion)
-		if err != nil {
-			log.Printf("Failed reading body of request: %+v", r.Body)
-			status = http.StatusBadRequest //400
-			writeResponse = false
-		}
 		e, ok := findNLatestEntries(3)
 		if !ok {
 			status = http.StatusNoContent
 			writeResponse = false
 		}
-		entries = e
+		entries = &e
 	}
 
 	w.WriteHeader(status)
 	if writeResponse {
 		var sum float32
-		for _, entry := range entries {
+		for _, entry := range *entries {
 			entry.Rates[entry.Base] = 1 //ensure a given value for this systems base Currency
 			sum += entry.Rates[conversion.Target] / entry.Rates[conversion.Base]
 		}
@@ -327,6 +315,6 @@ func EvaluationTriggerHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%+v", hooks)
 	for _, hook := range hooks {
 		hookRate := current.Rates[hook.Target] / current.Rates[hook.Base]
-		hook.Invoke(hookRate, *http.DefaultClient)
+		hook.Invoke(hookRate, http.DefaultClient.Post)
 	}
 }

@@ -3,7 +3,7 @@ package webhook
 import (
 	"bytes"
 	"encoding/json"
-	"log"
+	"io"
 	"net/http"
 )
 
@@ -35,8 +35,10 @@ type RequestBody struct {
 	Max     float32 `json:"maxTriggerValue"`
 }
 
+type postFunc func(string, string, io.Reader) (*http.Response, error)
+
 // Invoke - Invoke a post request to the webhook's URL with it's own body.
-func (hook *SubsciptionOut) Invoke(currentRate float32, client http.Client) (resp *http.Response, err error) {
+func (hook *SubsciptionOut) Invoke(currentRate float32, poster postFunc) (resp *http.Response, err error) {
 	body := &RequestBody{
 		Base:    hook.Base,
 		Target:  hook.Target,
@@ -44,11 +46,7 @@ func (hook *SubsciptionOut) Invoke(currentRate float32, client http.Client) (res
 		Min:     hook.Min,
 		Max:     hook.Max,
 	}
-	raw, err := json.Marshal(body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	resp, err = client.Post(hook.URL, "application/json", bytes.NewBuffer(raw))
+	raw, _ := json.Marshal(body)
+	resp, err = poster(hook.URL, "application/json", bytes.NewBuffer(raw))
 	return
 }

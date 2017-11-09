@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -30,11 +29,8 @@ func initializeDBConnection(mongoDBHosts []string) {
 //Tick - Runs at an interval to continuously keep the db up to date
 //and to invoke the webhooks
 func Tick() {
-	newEntry, err := fixer.GetLatest(fixerPath)
-	if err != nil {
-		log.Println(err)
-	}
-	err = globalDB.Add("currency", newEntry)
+	newEntry := fixer.GetLatest(fixerPath)
+	err := globalDB.Add("currency", newEntry)
 	if err == nil {
 		InvokeHooks(newEntry)
 	}
@@ -48,7 +44,7 @@ func InvokeHooks(current fixer.Currency) {
 	for _, hook := range hooks {
 		hookRate := current.Rates[hook.Target] / current.Rates[hook.Base]
 		if hook.Min <= hookRate && hook.Max >= hookRate {
-			hook.Invoke(hookRate, *http.DefaultClient)
+			hook.Invoke(hookRate, http.DefaultClient.Post)
 		}
 	}
 }

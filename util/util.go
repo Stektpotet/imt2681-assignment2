@@ -8,10 +8,10 @@ import (
 )
 
 //GetEnv - Obtain environment variable value
-func GetEnv(env string) (value string) {
-	value = os.Getenv(env)
+func GetEnv(key string) (value string) {
+	value = os.Getenv(key)
 	if value == "" {
-		log.Fatalf("$%s must be set. See config.", env)
+		log.Fatalf("$%s must be set. See config.", key)
 	}
 	return
 }

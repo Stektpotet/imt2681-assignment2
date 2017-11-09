@@ -2,7 +2,6 @@ package fixer
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -26,46 +25,35 @@ type Conversion struct {
 	Target string `json:"targetCurrency"`
 }
 
+//getFunc - type to allow for injecting the getter functionality
+type getFunc func(string) (*http.Response, error)
+
 //GetLatest - Shorthand function for GetCurrencies("latest")
 //allows for extra constraints available in the fixer api
-func GetLatest(constraints string) (payload Currency, err error) {
-
-	response, err := http.Get(latestPath + "?" + constraints)
-	if err != nil {
-		log.Printf("Failed obtaining currencies from Fixer: %+v", err.Error())
-		return
-	}
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Printf("Failed reading body: %+v", err.Error())
-		return
-	}
-	err = json.Unmarshal(body, &payload)
-	if err != nil {
-		log.Printf("Failed unmarshaling body: %+v", err.Error())
-		return
-	}
-	return
+func GetLatest(constraints string) (payload Currency) {
+	return getLatest(constraints, http.DefaultClient.Get)
 }
 
-func GetCurrencies(constraints string) (payload Currency) {
-	response, err := http.Get(fixerBaseURL + constraints)
-	if err != nil {
-		log.Printf("Failed obtaining currencies from Fixer: %+v", err.Error())
-		log.Println("Using local example file: ./base.json")
-		data, err := ioutil.ReadFile("./fixer/base.json")
-		if err != nil {
-			log.Fatal("Unable to read local example file ./base.json")
-		}
-		json.Unmarshal(data, &payload)
-	} else {
-		defer response.Body.Close()
-		err = json.NewDecoder(response.Body).Decode(&payload)
-	}
+func getLatest(constraints string, getter getFunc) (payload Currency) {
+	return getCurrencies("latest?"+constraints, getter)
+}
 
+// GetCurrencies - Obtain a Currency object based on the constraints given to the
+//fixer.io api
+func GetCurrencies(constraints string) (payload Currency) {
+	return getCurrencies(constraints, http.DefaultClient.Get)
+}
+
+func getCurrencies(constraints string, getter getFunc) (payload Currency) {
+	response, err := getter(fixerBaseURL + constraints)
+	defer response.Body.Close()
 	if err != nil {
-		body, _ := ioutil.ReadAll(response.Body)
-		log.Fatalf("Failed decoding Fixer-payload:%+v\n\n%+v", err, body)
+		log.Printf("Failed obtaining currencies: %+v", err.Error())
+		return
+	}
+	err = json.NewDecoder(response.Body).Decode(&payload)
+	if err != nil {
+		log.Fatalf("Failed decoding Fixer-payload:%+v", err)
 	}
 	return
 }

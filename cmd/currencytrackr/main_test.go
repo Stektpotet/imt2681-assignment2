@@ -214,12 +214,9 @@ var conversionRequest = func(method, path string, body bool) *http.Request {
 }
 
 func Test_findLastEntry(t *testing.T) {
-	latest, err := fixer.GetLatest("")
-	if err != nil {
-		t.Fatal(err)
-	}
+	latest := fixer.GetLatest("")
 	globalDB.DropCollection(dbCurrencyCollection)
-	err = globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
+	err := globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
 
 	if err != nil {
 		t.Fatal(err)
@@ -247,11 +244,8 @@ func TestLatestHandler(t *testing.T) {
 
 	globalDB.DropCollection(dbWebhookCollection)
 
-	latest, err := fixer.GetLatest("")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
+	latest := fixer.GetLatest("")
+	err := globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
 
 	if err != nil {
 		t.Fatal(err)
