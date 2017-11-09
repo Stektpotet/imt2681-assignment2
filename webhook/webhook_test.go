@@ -41,9 +41,8 @@ func TestSubsciptionOut_Invoke(t *testing.T) {
 		client      http.Client
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		// args     args
+		name        string
+		fields      fields
 		currentRate float32
 		wantResp    *http.Response
 		wantErr     bool
