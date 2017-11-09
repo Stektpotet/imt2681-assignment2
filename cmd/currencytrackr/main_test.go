@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
@@ -35,8 +34,12 @@ func FailOkf(ok bool, t *testing.T, context string, args ...interface{}) {
 		t.Errorf(context, args)
 	}
 }
+func Expect(context string, got, expected interface{}, t *testing.T) {
+	FailOk(got == expected, t, fmt.Sprintf("%s: got %v want %v", context, got, expected))
+}
 
 func TestMain(m *testing.M) {
+	defer util.Benchmark("Test", time.Now())
 	var mongoDBHosts = []string{
 		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
@@ -51,6 +54,9 @@ func TestMain(m *testing.M) {
 	globalDB.Init()
 	globalDB.DropCollection(dbWebhookCollection)
 	globalDB.DropCollection(dbCurrencyCollection)
+
+	defer globalDB.DropCollection(dbWebhookCollection)
+	defer globalDB.DropCollection(dbCurrencyCollection)
 	c := m.Run()
 	globalDB.Drop()
 	os.Exit(c)
@@ -62,34 +68,6 @@ var requestOnHandlerCode = func(method, path string, body []byte, handler http.H
 	hfunc := http.HandlerFunc(handler)
 	hfunc.ServeHTTP(rr, request)
 	return rr.Code
-}
-
-func Expect(context string, got, expected interface{}, t *testing.T) {
-	FailOk(got == expected, t, fmt.Sprintf("%s: got %v want %v", context, got, expected))
-}
-
-func Test_addEntriesForNPastDays(t *testing.T) {
-	// DB := &globalDB
-	//
-	// expectedDates := []fixer.Currency{}
-	// time := time.Now()
-	// for i := 0; i < 7; i++ {
-	// 	f := fixer.GetCurrencies(util.DateString(time.Date()))
-	// 	expectedDates = append(expectedDates, f)
-	// 	time = time.AddDate(0, 0, -1)
-	// }
-	//
-	// c := gomock.NewController(t)
-	// defer c.Finish()
-	// mock := *database.NewMockDBStorage(c)
-	// globalDB = &mock
-	//
-	// mock.EXPECT().Add(dbCurrencyCollection, gomock.Any()).AnyTimes()
-	//
-	// addEntriesForNPastDays(7)
-	//
-	// globalDB = *DB
-
 }
 
 var subscriptionRequest = func(method, ID string, body bool) *http.Request {
@@ -130,71 +108,6 @@ func TestSubscriptionPostGetDelete(t *testing.T) {
 	r.Method = http.MethodDelete
 	subscriptionDelete(hookIDPath)
 
-}
-
-func Test_subscriptionRegister(t *testing.T) {
-	//
-	// var rSub webhook.SubsciptionOut
-	// r := subscriptionRequest(http.MethodGet, "")
-	// rBody, err := ioutil.ReadAll(r.Body)
-	//
-	// Fail(err, t)
-	//
-	// json.Unmarshal(rBody, &rSub)
-
-	// raw, err := ioutil.ReadFile("../../webhook/sampleHook.json")
-	// r, err := http.NewRequest(http.MethodPost, "", bytes.NewBuffer(raw))
-	//
-	// mockCtrl := gomock.NewController(t)
-	// defer mockCtrl.Finish()
-	// mock := database.NewMockDBStorage(mockCtrl)
-	// // mock.EXPECT().Add()
-}
-
-func Test_subscriptionGet(t *testing.T) {
-
-	type args struct {
-		URLpath string
-	}
-	tests := []struct {
-		name        string
-		args        args
-		wantSub     webhook.SubsciptionOut
-		wantSuccess bool
-	}{
-	// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotSub, gotSuccess := subscriptionGet(tt.args.URLpath)
-			if !reflect.DeepEqual(gotSub, tt.wantSub) {
-				t.Errorf("subscriptionGet() gotSub = %v, want %v", gotSub, tt.wantSub)
-			}
-			if gotSuccess != tt.wantSuccess {
-				t.Errorf("subscriptionGet() gotSuccess = %v, want %v", gotSuccess, tt.wantSuccess)
-			}
-		})
-	}
-}
-
-func Test_subscriptionDelete(t *testing.T) {
-	type args struct {
-		URLpath string
-	}
-	tests := []struct {
-		name        string
-		args        args
-		wantSuccess bool
-	}{
-	// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if gotSuccess := subscriptionDelete(tt.args.URLpath); gotSuccess != tt.wantSuccess {
-				t.Errorf("subscriptionDelete() = %v, want %v", gotSuccess, tt.wantSuccess)
-			}
-		})
-	}
 }
 
 var conversionRequest = func(method, path string, body bool) *http.Request {
@@ -245,8 +158,6 @@ func Test_findLastEntry(t *testing.T) {
 			}
 		})
 	}
-
-	globalDB.DropCollection(dbCurrencyCollection)
 }
 
 func TestLatestHandler(t *testing.T) {
@@ -293,31 +204,6 @@ func TestLatestHandler(t *testing.T) {
 	globalDB.DropCollection(dbCurrencyCollection)
 }
 
-func Test_findNLatestEntries(t *testing.T) {
-	type args struct {
-		n int
-	}
-	tests := []struct {
-		name        string
-		args        args
-		wantEntries []fixer.Currency
-		wantOk      bool
-	}{
-	// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotEntries, gotOk := findNLatestEntries(tt.args.n)
-			if !reflect.DeepEqual(gotEntries, tt.wantEntries) {
-				t.Errorf("findNLatestEntries() gotEntries = %v, want %v", gotEntries, tt.wantEntries)
-			}
-			if gotOk != tt.wantOk {
-				t.Errorf("findNLatestEntries() gotOk = %v, want %v", gotOk, tt.wantOk)
-			}
-		})
-	}
-}
-
 func TestAverageHandler(t *testing.T) {
 
 	globalDB.DropCollection(dbWebhookCollection)
@@ -348,24 +234,6 @@ func TestAverageHandler(t *testing.T) {
 	}
 
 	globalDB.DropCollection(dbCurrencyCollection)
-}
-
-func TestEvaluationTriggerHandler(t *testing.T) {
-	type args struct {
-		w http.ResponseWriter
-		r *http.Request
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-	// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			EvaluationTriggerHandler(tt.args.w, tt.args.r)
-		})
-	}
 }
 
 func Test_initializeDBConnection(t *testing.T) {
