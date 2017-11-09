@@ -37,12 +37,12 @@ type RequestBody struct {
 
 // Invoke - Invoke a post request to the webhook's URL with it's own body.
 func (hook *SubsciptionOut) Invoke(currentRate float32, client http.Client) (resp *http.Response, err error) {
-	body := RequestBody{
-		hook.Base,
-		hook.Target,
-		currentRate,
-		hook.Min,
-		hook.Max,
+	body := &RequestBody{
+		Base:    hook.Base,
+		Target:  hook.Target,
+		Current: currentRate,
+		Min:     hook.Min,
+		Max:     hook.Max,
 	}
 	raw, err := json.Marshal(body)
 	if err != nil {
