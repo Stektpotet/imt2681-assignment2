@@ -13,7 +13,7 @@ import (
 
 const (
 	fixerPath      = "base=EUR"
-	tickerInterval = time.Minute /*Minute*/ * 10
+	tickerInterval = time.Minute * 10
 )
 
 func initializeDBConnection(mongoDBHosts []string) {

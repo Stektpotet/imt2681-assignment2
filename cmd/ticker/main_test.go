@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
@@ -34,8 +33,6 @@ func TestMain(m *testing.M) {
 	}
 	globalDB.Init()
 	globalDB.DropCollection("webhook")
-	defer globalDB.DropCollection("webhook")
-	defer globalDB.Drop()
 
 	c := m.Run()
 	os.Exit(c)
@@ -79,98 +76,58 @@ func Test_initializeDBConnection(t *testing.T) {
 
 func TestInvokeHooks(t *testing.T) {
 	globalDB.DropCollection("webhook")
-	bigRangeHook := webhook.SubsciptionOut{
-		Base:   "NOK",
-		Target: "EUR",
-		URL:    "localhost",
-		Min:    1,
-		Max:    10,
-	}
-	smallRangeHook := webhook.SubsciptionOut{
-		Base:   "NOK",
-		Target: "EUR",
-		URL:    "localhost",
-		Min:    1,
-		Max:    1.1,
+
+	testHookCount := 16
+
+	curr := fixer.Currency{
+		Base:  "EUR",
+		Rates: map[string]float32{"NOK": float32(testHookCount)},
 	}
 
-	curr := fixer.Currency{}
+	baseTestHook := webhook.SubsciptionOut{
+		Base:   curr.Base,
+		Target: "NOK",
+		Min:    1,
+		Max:    float32(testHookCount),
+	}
 
-	r, _ := PostHere("localhost", "application/json", nil)
-
-	json.NewDecoder(r.Body).Decode(&curr)
+	hooks := make([]webhook.SubsciptionOut, 0, testHookCount)
+	for i := 0; i < testHookCount; i++ {
+		hooks = append(hooks, baseTestHook)
+		hooks[i].Max -= float32(i)
+		globalDB.Add("webhook", hooks[i])
+	}
 
 	tests := []struct {
 		name         string
-		hooks        []webhook.SubsciptionOut
+		currentRate  float32
 		successCount int
 	}{
-		{
-			"Valid 1",
-			[]webhook.SubsciptionOut{
-				bigRangeHook,
-				bigRangeHook,
-				smallRangeHook,
-			},
-			2,
-		},
-		{
-			"Valid 2",
-			[]webhook.SubsciptionOut{
-				bigRangeHook,
-				bigRangeHook,
-				bigRangeHook,
-				bigRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-			},
-			4,
-		},
-		{
-			"Valid 3",
-			[]webhook.SubsciptionOut{
-				bigRangeHook,
-				smallRangeHook,
-				bigRangeHook,
-				smallRangeHook,
-			},
-			2,
-		},
-		{
-			"Not Valid 1",
-			[]webhook.SubsciptionOut{
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-			},
-			0,
-		},
-		{
-			"Not Valid ",
-			[]webhook.SubsciptionOut{
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-				smallRangeHook,
-			},
-			0,
-		},
+		{"Valid ", 16, 1},
+		{"Valid ", 15, 2},
+		{"Valid ", 14, 3},
+		{"Valid ", 13, 4},
+		{"Valid ", 12, 5},
+		{"Valid ", 11, 6},
+		{"Valid ", 10, 7},
+		{"Valid ", 9, 8},
+		{"Valid ", 8, 9},
+		{"Valid ", 7, 10},
+		{"Valid ", 6, 11},
+		{"Valid ", 5, 12},
+		{"Valid ", 4, 13},
+		{"Valid ", 3, 14},
+		{"Valid ", 2, 15},
+		{"Valid ", 1, 16},
 	}
-	for _, tt := range tests {
+	for i, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
-			invokeHooks(curr, PostHere)
+			curr.Rates[hooks[i].Target] = tt.currentRate
+			successCount := invokeHooks(curr, PostHere)
+			if tt.successCount != successCount {
+				t.Errorf("main.invokeHooks() = %v, want %v", successCount, tt.successCount)
+			}
 		})
 	}
 }
