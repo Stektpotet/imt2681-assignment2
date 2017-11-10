@@ -10,11 +10,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/Stektpotet/imt2681-assignment2/database"
 	"github.com/Stektpotet/imt2681-assignment2/fixer"
-	"github.com/Stektpotet/imt2681-assignment2/util"
 	"github.com/Stektpotet/imt2681-assignment2/webhook"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -39,7 +37,6 @@ func Expect(context string, got, expected interface{}, t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	defer util.Benchmark("Test", time.Now())
 	var mongoDBHosts = []string{
 		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
 		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
@@ -55,8 +52,6 @@ func TestMain(m *testing.M) {
 	globalDB.DropCollection(dbWebhookCollection)
 	globalDB.DropCollection(dbCurrencyCollection)
 
-	defer globalDB.DropCollection(dbWebhookCollection)
-	defer globalDB.DropCollection(dbCurrencyCollection)
 	c := m.Run()
 	globalDB.Drop()
 	os.Exit(c)
@@ -130,15 +125,9 @@ var conversionRequest = func(method, path string, body bool) *http.Request {
 }
 
 func Test_findLastEntry(t *testing.T) {
-	sw := time.Now()
 	latest := fixer.GetLatest("")
-	util.Benchmark("GetLatest", sw)
-	sw = time.Now()
 	globalDB.DropCollection(dbCurrencyCollection)
-	util.Benchmark("DropCollection", sw)
-	sw = time.Now()
 	err := globalDB.Add(dbCurrencyCollection, latest) //Make sure there is a "latest entry"
-	util.Benchmark("Add", sw)
 
 	if err != nil {
 		t.Fatal(err)

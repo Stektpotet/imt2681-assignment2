@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"testing"
 )
@@ -24,59 +25,57 @@ func PostHere(url, contentType string, r io.Reader) (resp *http.Response, err er
 
 func TestSubsciptionOut_Invoke(t *testing.T) {
 
-	r, err := PostHere("local", "application/json", nil)
-	if err != nil {
-		t.Error(err)
+	body := &RequestBody{
+		Base:    "NOK",
+		Target:  "EUR",
+		Current: 1.5,
+		Min:     1,
+		Max:     2,
 	}
 
-	type fields struct {
-		URL    string
-		Base   string
-		Target string
-		Min    float32
-		Max    float32
-	}
-	type args struct {
-		currentRate float32
-		client      http.Client
-	}
 	tests := []struct {
 		name        string
-		fields      fields
 		currentRate float32
-		wantResp    *http.Response
-		wantErr     bool
+		wantInvoke  bool
 	}{
 		{
-			name: "OK",
-			fields: fields{
-				URL:    "local",
-				Base:   "NOK",
-				Target: "EUR",
-				Min:    0.2,
-				Max:    1,
-			},
-			currentRate: 0.4,
-			wantResp:    r,
-			wantErr:     false,
+			name:        "Too low -> does not invoke",
+			currentRate: 0.5,
+			wantInvoke:  true,
+		},
+		{
+			name:        "In Range -> does invoke",
+			currentRate: 1.5,
+			wantInvoke:  true,
+		},
+		{
+			name:        "Too high -> does not invoke",
+			currentRate: 10,
+			wantInvoke:  false,
+		},
+		{
+			name:        "negative value -> does not invoke",
+			currentRate: -1,
+			wantInvoke:  false,
+		},
+		{
+			name:        "value -> does not invoke",
+			currentRate: float32(math.NaN()),
+			wantInvoke:  false,
 		},
 	}
 	for _, tt := range tests {
+		body.Current = tt.currentRate
 		t.Run(tt.name, func(t *testing.T) {
 			hook := &SubsciptionOut{
-				URL:    tt.fields.URL,
-				Base:   tt.fields.Base,
-				Target: tt.fields.Target,
-				Min:    tt.fields.Min,
-				Max:    tt.fields.Max,
+				Base:   body.Base,
+				Target: body.Target,
+				Min:    body.Min,
+				Max:    body.Max,
 			}
-			gotResp, err := hook.Invoke(tt.currentRate, PostHere)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SubsciptionOut.Invoke() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if gotResp == tt.wantResp {
-				t.Errorf("SubsciptionOut.Invoke() = %v, want %v", gotResp, tt.wantResp)
+			gotBody := hook.Invoke(tt.currentRate, PostHere)
+			if gotBody == body {
+				t.Errorf("SubsciptionOut.Invoke() = %v, want %v", gotBody, body)
 			}
 		})
 	}

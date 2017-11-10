@@ -30,8 +30,3 @@ func Contains(s []string, e string) bool {
 	}
 	return false
 }
-
-func Benchmark(msg string, start time.Time) {
-	duration := (time.Now().Nanosecond() - start.Nanosecond()) / 1e6
-	fmt.Printf("Duration for %s: %vms\n", msg, duration)
-}

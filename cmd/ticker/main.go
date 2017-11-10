@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -32,21 +33,29 @@ func Tick() {
 	newEntry := fixer.GetLatest(fixerPath)
 	err := globalDB.Add("currency", newEntry)
 	if err == nil {
-		InvokeHooks(newEntry)
+		log.Printf("invoked %d on new entry:\n%v", InvokeHooks(newEntry), newEntry)
 	}
 }
 
+//InvokeHooks - Invoke all hooks that are subscribed within the given rate and retun number of envoked elements
+func InvokeHooks(current fixer.Currency) int {
+	return invokeHooks(current, http.DefaultClient.Post)
+}
+
 //InvokeHooks - Invoke all hooks that are subscribed within the given rate
-func InvokeHooks(current fixer.Currency) {
+func invokeHooks(current fixer.Currency, poster webhook.PostFunc) (invocations int) {
+	invocations = 0
 	hooks := []webhook.SubsciptionOut{}
 	current.Rates[current.Base] = 1
 	globalDB.GetAll("webhook", &hooks)
 	for _, hook := range hooks {
 		hookRate := current.Rates[hook.Target] / current.Rates[hook.Base]
 		if hook.Min <= hookRate && hook.Max >= hookRate {
-			hook.Invoke(hookRate, http.DefaultClient.Post)
+			hook.Invoke(hookRate, poster)
+			invocations++
 		}
 	}
+	return
 }
 
 var globalDB database.DBStorage
