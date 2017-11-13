@@ -12,21 +12,11 @@ import (
 	"github.com/Stektpotet/imt2681-assignment2/database"
 	"github.com/Stektpotet/imt2681-assignment2/fixer"
 	"github.com/Stektpotet/imt2681-assignment2/webhook"
-	"github.com/subosito/gotenv"
 )
 
-func init() {
-	gotenv.MustLoad("../../.env")
-}
-
 func TestMain(m *testing.M) {
-	var mongoDBHosts = []string{
-		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
-		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
-		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
-	}
 	globalDB = &database.MongoDB{
-		HostURLs:  mongoDBHosts,
+		HostURLs:  []string{"localhost"},
 		AdminUser: "tester",
 		AdminPass: "WA9LI7f2DbVQtvbM",
 		Name:      "test",
@@ -35,6 +25,9 @@ func TestMain(m *testing.M) {
 	globalDB.DropCollection("webhook")
 
 	c := m.Run()
+
+	globalDB.DropCollection("webhook")
+	globalDB.Drop()
 	os.Exit(c)
 }
 
@@ -60,11 +53,7 @@ func Test_initializeDBConnection(t *testing.T) {
 	}{
 		{
 			"Valid",
-			[]string{
-				"cluster0-shard-00-00-qvogu.mongodb.net:27017",
-				"cluster0-shard-00-01-qvogu.mongodb.net:27017",
-				"cluster0-shard-00-02-qvogu.mongodb.net:27017",
-			},
+			[]string{"localhost"},
 		},
 	}
 	for _, tt := range tests {

@@ -9,12 +9,17 @@ import (
 	"github.com/Stektpotet/imt2681-assignment2/fixer"
 	"github.com/Stektpotet/imt2681-assignment2/util"
 	"github.com/Stektpotet/imt2681-assignment2/webhook"
+	"github.com/subosito/gotenv"
 )
 
 const (
 	fixerPath      = "base=EUR"
 	tickerInterval = time.Minute * 10
 )
+
+func init() {
+	gotenv.MustLoad("../../.env")
+}
 
 func initializeDBConnection(mongoDBHosts []string) {
 

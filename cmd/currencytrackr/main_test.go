@@ -37,13 +37,8 @@ func Expect(context string, got, expected interface{}, t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	var mongoDBHosts = []string{
-		"cluster0-shard-00-00-qvogu.mongodb.net:27017",
-		"cluster0-shard-00-01-qvogu.mongodb.net:27017",
-		"cluster0-shard-00-02-qvogu.mongodb.net:27017",
-	}
 	globalDB = &database.MongoDB{
-		HostURLs:  mongoDBHosts,
+		HostURLs:  []string{"localhost"},
 		AdminUser: "tester",
 		AdminPass: "WA9LI7f2DbVQtvbM",
 		Name:      "test",
@@ -53,6 +48,9 @@ func TestMain(m *testing.M) {
 	globalDB.DropCollection(dbCurrencyCollection)
 
 	c := m.Run()
+
+	globalDB.DropCollection(dbWebhookCollection)
+	globalDB.DropCollection(dbCurrencyCollection)
 	globalDB.Drop()
 	os.Exit(c)
 }

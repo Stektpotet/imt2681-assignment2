@@ -67,6 +67,7 @@ func main() {
 	log.Println("Running CurrencyTrackR")
 	// globalDB = &database.CurrencyDB{}
 	initializeDBConnection()
+
 	http.HandleFunc(rootPath, SubscriptionHandler)
 	http.HandleFunc(latestPath, LatestHandler)
 	http.HandleFunc(averagePath, AverageHandler)
