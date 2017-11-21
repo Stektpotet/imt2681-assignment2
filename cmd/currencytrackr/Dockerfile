@@ -1,11 +1,15 @@
-FROM alpine:latest
+FROM golang:latest
 
 MAINTAINER Halvor Smedås <Stektpotet@gmail.com>
 
-WORKDIR "/opt"
+ENV PROJECT_ROOT=$GOPATH/src/github.com/Stektpotet/imt2681-assignment2
+
+WORKDIR $PROJECT_ROOT
 
 # Root -> Workdir
+COPY . .
+RUN env
+RUN ls -al ./*
+RUN go build -v ./cmd/currencytrackr/
 
-COPY . ./assignment2
-
-CMD ["currencytrackr"]
+CMD ["./currencytrackr"]
