@@ -1,9 +1,20 @@
 package util
 
 import (
+	"log"
 	"testing"
 	"time"
 )
+
+func TestGetEnv(t *testing.T) {
+	logFatalf = func(format string, v ...interface{}) { log.Printf(format, v) }
+	defer func() { logFatalf = log.Fatalf }()
+	if !t.Run("Fail Please", func(t *testing.T) {
+		GetEnv("NOTHING")
+	}) {
+		t.Error("Expected fail with nonexistant env variable")
+	}
+}
 
 func TestContains(t *testing.T) {
 	type args struct {

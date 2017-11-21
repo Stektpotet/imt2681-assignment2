@@ -7,11 +7,13 @@ import (
 	"time"
 )
 
+var logFatalf = log.Fatalf
+
 //GetEnv - Obtain environment variable value
 func GetEnv(key string) (value string) {
 	value = os.Getenv(key)
 	if value == "" {
-		log.Fatalf("$%s must be set. See config.", key)
+		logFatalf("$%s must be set. See config.", key)
 	}
 	return
 }

@@ -45,8 +45,6 @@ func PostHere(url, contentType string, r io.Reader) (resp *http.Response, err er
 }
 
 func Test_initializeDBConnection(t *testing.T) {
-	type args struct {
-	}
 	tests := []struct {
 		name         string
 		mongoDBHosts []string
