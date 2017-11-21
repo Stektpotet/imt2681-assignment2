@@ -277,6 +277,9 @@ _Parts of the assignment I'm particularly happy about_
   As I had trouble with understanding how to handle the sensitive data (Posted an issue on the issuetracker on this topic), I ended up essentially posting credentials to connect to the test database (as I wasn't able to load environment variables from the test environment, later I've found gotenv to be useful here), however I realized that _it is a major security flaw_ to allow anyone to connect to the mongo cluster, especially when the credentials would allow them to enter the actual database the service too would use. This is why I created a very basic user that was only allowed to read/write on the "test" database and it's one collection.
 
 - High test coverage. If I've done my calculations right, I'm at 75% test coverage in total, almost the required coverage doubled.
+|
+- Dockerized project. just run `docker build --tag ass2:latest --file ./cmd/currencytrackr/Dockerfile.
+`
 
 ## Other Noteworthy Mentions
 
