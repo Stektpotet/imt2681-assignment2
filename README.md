@@ -2,7 +2,7 @@
 
 ---
 
-##Service Requirements 
+## Service Requirements 
 
 The service will allow a user to monitor a currency ticker, and notify a webhook upon a tick where certain conditions are met, such as the price falling below or going above a given threshold. The API must allow the user to specify the base currency (for simplicity, if the base is not EURO, your service should respond that this is not yet implemented), the target currency (arbitrary, from all currencies supported by [fixer.io](http://fixer.io/)), and the min and max price for the event to trigger the notification. The notification will be provided via a webhook specified by the user, and multiple webhooks should be provided (predefined types). 
 
@@ -16,11 +16,11 @@ Clarification: The service will only need to support the use of EUR as base curr
 
 ---
 
-##Service Specification
+## Service Specification
 
 Base URL: http://<app_name>.herokuapps.com/
 
-####Registration of new webhook
+#### Registration of new webhook
 
 New webhooks can be registered using POST requests with the following schema.
 
@@ -60,7 +60,7 @@ The response body contains the id of the created webhook, as string. Note, the r
 
 ---
 
-####Invoking a registered webhook
+#### Invoking a registered webhook
 
 When the service invokes a registered webhook, it uses following payload specification:
 
@@ -100,7 +100,7 @@ Upon successful notification you will receive either status code 200 (for trigge
 
 ---
 
-####Accessing registered webhooks
+#### Accessing registered webhooks
 
 Registered webhooks can be accessed with the webhook ID generated during registration**.**
 
@@ -134,7 +134,7 @@ Status _200 - OK_
 
 ---
 
-####Deleting registered webhooks 
+#### Deleting registered webhooks 
 
 Registered webhooks can also be deleted using the webhook id.
 
@@ -154,7 +154,7 @@ Status _404 - Not Found_
 
 ---
 
-####Retrieving the latest currency exchange rates
+#### Retrieving the latest currency exchange rates
 
 **Request:**
 
@@ -188,7 +188,7 @@ The response contains only the latest exchange rate value (no json tags).
 
 ---
 
-####Retrieving the running average over the past three days 
+#### Retrieving the running average over the past three days 
 
 **Request:**
 
@@ -222,7 +222,7 @@ The response contains only the average (of the last three days) exchange rate va
 
 ---
 
-####Triggering webhooks for testing purposes - FOR DEVS ONLY
+#### Triggering webhooks for testing purposes - FOR DEVS ONLY
 
  
 
@@ -278,7 +278,7 @@ _Parts of the assignment I'm particularly happy about_
 
 - High test coverage. If I've done my calculations right, I'm at 75% test coverage in total, almost the required coverage doubled.
 
-###Other Noteworthy Mentions
+## Other Noteworthy Mentions
 
 _aka. Issues Revolving Around my Submission_ 
 
